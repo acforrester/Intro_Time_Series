@@ -1,0 +1,1187 @@
+---
+title: "A (Very) Brief Introduction Time Series Analysis and Forecasting"
+author: "Andrew C. Forrester"
+date: "Aug. 22, 2024"
+institute: |
+  | Joint Program in Survey Methodology (JPSM)
+  | University of Maryland, College Park
+  | [forresac@umd.edu](mailto:forresac@umd.edu)
+format:
+  revealjs:
+    smaller: true
+    incremental: true
+    css: css/styles.css
+---
+
+```{r init}
+
+
+# Load packages
+pacman::p_load(
+  tidyverse,
+  tseries,
+  seasonal,
+  forecast,
+  caret,
+  randomForest,
+  xgboost,
+  gridExtra)
+
+# Dollar from my wallet
+set.seed(34877897)
+
+# Load data
+load("data_housing.Rda")
+
+```
+
+## Overview
+
+Objective: Provide a basic overview of high-level time series concepts with a focus on univariate time series and forecasting applications.
+
+::: incremental
+-   Provide the basic building blocks of time series analysis, i.e., AR, MA, and ARIMA.
+
+-   Describe some modelling considerations, i.e. non-stationarity, seasonality.
+
+-   Provide a forecasting example with real world data and remarks.
+
+    -   Compare time series forecasting vis-a-vis some machine learning methods.
+
+-   Will upload the slides and code to GitHub as well.
+:::
+
+# Time Series Basics
+
+## Time Series Basics (1 of 2)
+
+A time series $y_{t}$ ($\{y_t : t =1, 2, \dots T\}$) is a sequence of ordered observations of the same variable measured over time.
+
+::: incremental
+-   Examples range from economic variables (Gross Domestic Product and consumer prices), finance (asset returns), demographics and vital statistics (births and deaths), environmental (CO2 production, electrical generation), medicine (blood pressure), engineering (vibration, signal to noise), and many more.
+
+    -   Time series analysis is mathematical in nature.
+
+-   Observations can be related to each other over time and usually are.
+
+    -   This is the key issue with time series data, as time dependence breaks down most traditional assumptions in statistics (Law of Large Numbers, Central Limit Thm.).
+
+-   Time can be in years, months, days, even minutes.
+
+    -   Different *periodicities* require different assumptions, for example leap years with weekly data.
+
+-   Measurements do not necessarily need to be evenly spaced.
+:::
+
+## Time Series Basics (2 of 2)
+
+### Some General Notation
+
+I will use the following notation:
+
+-   $y_{t}$ time series from $t =1, \ldots, T$
+
+-   Lag $k$ of series $y_{t}$: $y_{t-k}$
+
+-   Lag operator: $Ly_{t} \equiv y_{t-1},~ L^{k}y_{t} \equiv y_{t-k}$
+
+-   Difference operator: $\Delta y_{t} \equiv y_{t} - L y_{t}$
+
+-   White noise process: $e_{t}~\overset{i.i.d.}{\sim} \mathcal{N}(0, \sigma^2)$
+
+-   Sample error term: $u_{t} \overset{i.i.d.}{\sim}\mathcal{N}(0,\sigma^{2}_{u})$
+
+# General Properties
+
+## Time Series Properties (1 of 4)
+
+### Autocorrelation
+
+The key to time series analysis is modelling a series based on relating the past to the present. This involves looking at how *autocorrelated* the series is over time. Assuming (for now) that the series $y_{t}$ has a constant mean $\mu$, take the following
+
+$$
+\begin{align}
+\sigma^{2}_{0} &= E[(y_{t} - \mu)^{2}] & \tt(Variance) \\
+\sigma^{2}_{k} &= E[(y_{t} - \mu)(y_{t-k} - \mu)] & \tt(Autocovariance) \\
+\gamma(k)      &= \frac{\sigma^{2}_{k}}{\sigma^{2}_{0}} & \tt(Autocorrelation) \\
+\end{align}
+$$ These represent how $y_{t}$ relates to itself over $k$ periods back in time. These will be key!
+
+## Time Series Properties (2 of 4)
+
+### Stationarity
+
+**Definition**. A time series is (weakly or covariance) *stationary* if it satisfies the following conditions for all $t$:
+
+$$
+\begin{align*}
+E[y_{t}]            &= \mu \\
+Var(y_{t})          &= \sigma^{2}_{y} \\
+Cov(y_{t}, y_{t-k}) &= \sigma^{2}_{k}
+\end{align*}
+$$
+
+The series must have a constant mean (e.g. not trending), constant variance, and its autocovariance $\sigma^{2}_{k}$ must depend only on $k$.
+
+## Time Series Properties (3 of 4)
+
+```{r}
+#| echo: false
+#| fig.width: 10
+#| fig.height: 6
+#| fig.dpi: 600
+
+# White noise process
+stationary_ts <- rnorm(100)
+
+# Random walk
+non_stationary_ts <- cumsum(rnorm(100))
+
+# Create data frames for ggplot
+stationary_df <- data.frame(Time = 1:100, Value = stationary_ts)
+non_stationary_df <- data.frame(Time = 1:100, Value = non_stationary_ts)
+
+# Plot stationary time series
+stationary_plot <- ggplot(stationary_df, aes(x = Time, y = Value)) +
+  geom_line(color = "darkblue") +
+  ggtitle("Stationary Time Series") +
+  theme_minimal()
+
+# Plot non-stationary time series
+non_stationary_plot <- ggplot(non_stationary_df, aes(x = Time, y = Value)) +
+  geom_line(color = "darkred") +
+  ggtitle("Non-Stationary Time Series") +
+  theme_minimal()
+
+# Arrange the plots side by side
+grid.arrange(stationary_plot, non_stationary_plot, ncol = 2)
+```
+
+## Time Series Properties (4 of 4)
+
+### Ergodicity
+
+A series is ergodic if the autocovariance $\gamma(k)$ decays to zero as we increase the number of time lags, i.e.,
+
+$$
+Cov(y_{t}, y_{t-k}) \rightarrow 0~\text{as}~k~\rightarrow~\infty.
+$$
+
+In words, this means that the dependence of $y_{t}$ is short-lived. This is a sufficient condition for the mean to be ergodic, or
+
+$$
+\frac{1}{T} \sum_{t = 1}^{T} y_{t} \rightarrow E[y_{t}],\quad \text{as}~~T\rightarrow\infty.
+$$
+
+Ergodicity is important to describe whether the *time average* is an unbiased and consistent estimator of the mean (recall we have a sample of time dependent observations).
+
+# Time Series Models
+
+## Time Series Regression Models (1 of 2)
+
+First we start with the building block: the *white noise process* or shock
+
+$$
+e_{t}\overset{i.i.d.}{\sim} \mathcal{N}(0, \sigma^{2}).
+$$ {#eq-white-noise}
+
+The white noise process $e_{t}$ thus has the following characteristics
+
+$$
+\begin{align*}
+E[e_t] &= 0, \forall~t \\
+E[e_t^2]       &= \sigma^2, \forall~t \\
+E[e_t e_{t-k}] &= 0, \forall t,k
+\end{align*}
+$$
+
+The white noise process has zero mean, fixed variance $\sigma^2$, and is not serially correlated.
+
+## Time Series Regression Models (2 of 2)
+
+The most basic time series models are linear combinations of the series' lags and white noise, including the *autoregressive* $AR(p)$ and *moving average* $MA(q)$ forms
+
+$$
+\begin{align*}
+y_{t} &= \phi_0 + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \ldots + \phi_p y_{t-p} + e_t& \quad \tt{AR(p)} \\
+y_{t} &= e_{t} + \theta_1 e_{t-1} + \ldots + \theta_q e_{t-q} & \tt{MA(q)} \\
+y_{t} &= e_{t} + \phi_1 y_{t-1} + \ldots + e_{t} + \theta_1 e_{t-1} + \ldots & \tt{ARMA(p,q)} 
+\end{align*}
+$$ {#eq-basic-models}
+
+In words, AR processes represents $y_t$ as a function of its past realizations $y_{t-p}$ and MA processes as a function of its past shocks $\epsilon_{t-q}$. The $ARMA(p,q)$ combines the two types of models into one.
+
+::: incremental
+-   The $AR(p)$ process can be estimated using simple OLS!
+
+-   The $MA(q)$ and $ARMA(p,q)$ processes are less straightforward because the estimated $\{\theta_q\}$'s are unobserved.
+
+    -   Therefore maximum likelihood is needed to estimate MA models.
+:::
+
+## Regression Examples
+
+```{r}
+#|fig-height: 10
+#|fig-width: 6
+#|fig-dpi: 600
+#|cache: true
+#|echo: true
+
+# Number of observations
+n <- 100
+
+# Simulate an AR(2) process: y_t = 0.5*y_{t-1} - 0.25*y_{t-2} + e_t
+ar_coeffs <- c(0.5, -0.25)
+simulated_ts <- arima.sim(n = n, list(ar = ar_coeffs))
+
+# Fit AR(2) model
+ar_model <- arima(simulated_ts, order = c(2, 0, 0))
+
+# Fit MA(1) model
+ma_model <- arima(simulated_ts, order = c(0, 0, 1))
+
+# Extract fitted values from both models
+ar_fitted <- simulated_ts - ar_model$residual
+ma_fitted <- simulated_ts - ma_model$residual
+
+# Create a data frame for ggplot
+plot_df <- data.frame(
+  Time = 1:n,
+  Observed = simulated_ts,
+  AR_Fitted = c(ar_fitted), # Align fitted values with original time series
+  MA_Fitted = c(ma_fitted)      # Align fitted values with original time series
+)
+
+# Plot observed series and fitted values from both models
+combined_plot <- ggplot(plot_df, aes(x = Time)) +
+  geom_line(aes(y = Observed), color = "grey30", linetype = "solid", size = 1) +
+  geom_line(aes(y = AR_Fitted), color = "darkblue", linetype = "solid", size = 1) +
+  geom_line(aes(y = MA_Fitted), color = "darkred", linetype = "dashed", size = 1) +
+  ggtitle("Observed vs Fitted Values: AR(2) and MA(1) Models") +
+  ylab("Value") +
+  xlab("Time") +
+  theme_minimal() +
+  scale_color_manual(values = c("Observed" = "grey30", "AR_Fitted" = "darkblue", "MA_Fitted" = "darkred"))
+
+# Display the plot
+print(combined_plot)
+```
+
+## Invertibility of the AR/MA Model (Optional)
+
+**Theorem.** An autoregressive model of order one $AR(1)$ is *invertible* if it can be represented as an $MA(\infty)$ under the condition that it is stationary, i.e., $|\phi_1|<1$.
+
+*Proof.* See [Appendix].
+
+## Box-Jenkins Methodology
+
+Three strategies to approach fitting an $ARMA(p,q)$ model:
+
+1.  *Information Criterion*. Fit models over a grid of $AR(p)$ and $MA(q)$ orders; compute information criteria, such as Akaike's (AIC), Bayesian-Schwartz (BIC); and pick the model with the smallest value. (Most popular method)
+2.  *Parsimony*. Start with the simplest $AR(1)$ model and add lagged regressors until the error term $u_t$ resembles white noise.
+3.  *General to Specific.* Start with a general $AR(p)$ model and work down with fewer lags.
+
+. . .
+
+Most software packages will implement these procedures automatically, usually (1).
+
+## Unit Roots (1 of 3)
+
+### Overview
+
+**Definition.** A time series is non-stationary if it contains a unit root.
+
+-   This raises issues because the WLLN and CLT do not apply
+
+-   Unit root processes require additional modeling considerations, i.e., stationarizing the series
+
+## Unit Roots (2 of 3)
+
+### Example
+
+Consider the basic AR(1) model
+
+$$
+y_t = \phi_0 + \phi_1 y_{t-1} + u_{t}, ~~~ u_{t}\sim \mathcal{N}(0, \sigma^2_u).
+$$ {#eq-ar-1}
+
+If we have $\phi_1 = 1$, then by we can show that the process [@eq-ar-1] converges to
+
+$$
+y_t = \phi_0 t + y_0 + u_0 + \cdots + u_t.
+$$
+
+Therefore, we observe that the mean $E[y_t] = \phi_0 t + y_0$ depends on time.
+
+## Unit Roots (3 of 3)
+
+### Testing for Unit Roots
+
+Consider a basic AR(1) model
+
+$$
+y_t = \phi_1 y_{t-1} + e_{t}.
+$$
+
+To test for a unit root, we want to test $\phi_1 = 1$. This can easily be done by estimating the first-difference model
+
+$$
+\Delta y_{t} = \beta y_{t-1} + e_t,
+$$
+
+where $\beta \equiv \phi_1 - 1$. We now want to test the new hypotheses
+
+$$
+\begin{equation}
+\begin{cases}
+H_0: \beta = 0\\
+H_A: \beta < 0.
+\end{cases}
+\end{equation}
+$$
+
+Note that this is a *one-sided* test. This test can also be run with a trend included, i.e., the Augmented Dickey-Fuller (ADF) test.
+
+## The ARIMA Model (1 of 3)
+
+### Trend v. Difference Stationarity
+
+Suppose we have the series $y_{t} = a t + u_{t}$ where $a$ is a constant $u_{t} \sim N(0, \sigma^2_u)$. To make this series stationary, we need to subtract the trend (or detrend) it
+
+$$
+u_{t} = y_{t} - a t. \quad \tt{(\text{Trend Stationary})}
+$$
+
+In the case of the unit root series where $\phi_1 = 1$, we have
+
+$$y_{t} = \phi_0 + y_{t-1} + u_{t}.$$ To make this series stationary we can take the first difference
+
+$$
+u_{t} + \phi_0 = y_{t} - y_{t-1} = \Delta y_{t}.\quad \tt{(\text{Difference Stationary})}
+$$
+
+## The ARIMA Model (2 of 3)
+
+### Applying the ARIMA Model
+
+Because we can not apply an $ARMA(p,q)$ model to a non-stationary series, enter the $ARIMA(p,d,q)$ model, where $d$ denotes the order of integration (number of differences).
+
+-   The $ARIMA(p,d,q)$ model takes a difference $d$ times to achieve stationarity, then applies an $ARMA(p,q)$ model.
+
+-   When choosing an $ARIMA(p,d,q)$ model, first perform ADF tests (with or without trend) and:
+
+    -   For series with evidence of non-stationarity, take differences and apply $ARMA(p,q)$.
+
+    -   For series with no evidence of non-stationarity, detrend if trending and apply $ARMA(p,q)$
+
+## The ARIMA Model (3 of 3)
+
+### Regression with ARIMA Errors
+
+RegARIMA is a hybrid model combines external regressors with an ARIMA model
+
+-   Regression component contains additional explanatory variables, such as outlier treatments, holidays, trading day effects, etc.
+
+-   Fixed regressors can model seasonal effects
+
+-   Will describe a common RegARIMA framework soon...
+
+## Seasonality and the Classical Decomposition
+
+A time series can be decomposed into *trend*, *seasonal*, and *irregular* components, either additively or multiplicatively as
+
+$$
+\begin{cases}
+y_t = T_t + S_t + I_t &\tt{(additive)} \\
+y_t = T_t \times S_t \times I_t & \tt{(multiplicative)}
+\end{cases}
+$$
+
+Various methods exist to estimate each compartment, such as X-11 (U.S. Census Bureau), SEATS (Bank of Spain), Seasonal and Trend Decomposition with LOESS (Cleveland et al.).
+
+::: incremental
+-   X-11 and SEATS are most common among statistical agencies
+:::
+
+## Aside: X-13ARIMA-SEATS
+
+The standard method to seasonally adjust time series in the U.S. statistical system is X-13ARIMA-SEATS and it provides numerous useful features.
+
+-   Software that combines X-11 and SEATS capabilities into one package.
+
+-   Implementations in *R* `seasonal::seas` and Python `statsmodels` are easy to use.
+
+-   Provides extensive diagnostics automatically (seasonal tests, autocorrelation, etc.).
+
+-   Impressive outlier detection abilities.
+
+-   Produces RegARIMA forecasts.
+
+-   Bottom line: X-13 is great!
+
+# Forecasting
+
+## Forecasting ARMA Models (1 of 2)
+
+A primary focus in this discussion is forecasting the series $y_{t}$. We know that because the models are mean-zero, the best predictor of $y_{t+1}$ is the conditional mean. Let's take the $AR(1)$ as an example, where
+
+$$
+y_{t} = \phi_1 y_{t-1} + e_{t}, \quad t =1,\ldots,T.
+$$
+
+Stepping ahead 1, 2, and $k$ steps we have
+
+$$
+\begin{align}
+E[y_{T+1} | \Omega_T] &= E[(\phi_1 y_{T} + e_{T+1}) | \Omega_T] = \phi_1 y_T \\
+E[y_{T+2} | \Omega_T] &= E[(\phi_1 y_{T+1} + e_{T+2}) | \Omega_T] = \phi^2_1 y_{T}\\
+               \cdots &= \cdots \\
+E[y_{T+k} | \Omega_T] &= E[(\phi_1 y_{T+k-1} + e_{T+k}) | \Omega_T] = \phi_1^k y_T.
+\end{align}
+$$
+
+Recursion gives us the prediction of $y_{t+k}$ condition on the information set $\Omega_T$ in the final period $T$.
+
+## Forecasting ARMA Models (2 of 2)
+
+Now what about the forecasting errors? Notice as we step ahead
+
+$$
+\begin{align}
+y_{t+1} - E[y_{T+1} | \Omega_T] &= y_{T+1} - \phi_1 Y_T = e_{T+1} \\
+y_{t+2} - E[y_{T+2} | \Omega_T] &= e_{T+2} + \phi_1 e_{T+1} \\
+                         \cdots &= \cdots \\
+y_{t+k} - E[y_{T+k} | \Omega_T] &= e_{T+k} + \phi_1 e_{T+k-1} + \ldots + \phi_1^{k-1} e_{T+1}.
+\end{align}
+$$
+
+Notice that as $k\rightarrow\infty$ the forecasting error $E[y_{T+k}|\Omega_T]\rightarrow 0$, thus the the forecast converges to the unconditional mean. In words, the unconditional mean is the limit for the long-run forecast. We can construct confidence intervals for the forecast as
+
+$$
+CI_{\pm 95} = E[y_{t+k} | \Omega_T] \pm 1.96 \times \underbrace{\sqrt{Var(y_{t+k}|\Omega_T)}}_{\text{Uncond'l. Std. Dev.}}\times y_{t+k}.
+$$
+
+# Time Series Diagnostics
+
+## Plot the Data First
+
+The best practice when working with time series is to plot them.
+
+-   "Eye-ball econometrics" can be very useful to determine which pre-tests to run or what models to focus on.
+
+-   What to look for?
+
+    ::: incremental
+    -   Is the series trending or does it look roughly random? Is the series too smooth? Structural breaks
+
+    -   Are there any noticeable seasonal pattern? Any cyclicality?
+
+    -   Are there outliers?
+    :::
+
+## Examining (Partial) Autocorrelations
+
+Two key elements of model selection in the Box-Jenkins approach are the Autocorrelation Function (ACF) and the Partial Autocorrelation Function (PACF).
+
+-   *Autocorrelation Function*
+
+    -   The ACF is what we've seen before: $\gamma(k) = Cov(y_{t}, y_{t-1})$
+
+    -   Useful for identifying the order of an MA process and checking stationarity, slow decay is a sign of non-stationarity.
+
+-   *Partial Autocorrelation Function*
+
+    -   The PACF represents the correlation between $y_{t}$ and $y_{t-k}$ after projecting out the influence of lags $1, \ldots, k-1$ by fitting a series of autoregressions to $y_{t}$.
+
+    -   This helps identify the order of an AR process.
+
+## Analyzing Residuals
+
+A principal assumption is that the residuals should be white noise. Recall, $e_{t} \overset{i.i.d}{\sim} \mathcal{N}(0, \sigma^2)$. A crucial test is to test that there is no residual autocorrelation using the Ljung-Box test which tests
+
+$$
+\begin{cases}
+H_0: \text{Residuals are not autocorrelated up to lag}~m\\
+H_A: \text{Residuals autocorrelated to lag}~m
+\end{cases}
+$$
+
+A related test is the QS test for residual seasonality, which modifies the Ljung-Box test to test seasonal lags. This is especially useful to evaluate models used to seasonally adjust data.
+
+# Empirical Application
+
+## Empirical Application: Housing Starts
+
+Some of my current research involves projecting housing supply as an input to produce population estimates.
+
+-   The housing unit method estimates population by first estimating the housing stock, or housing units $\text{HU}_{t}$ and multiplying by the expected number of people living in them.
+
+    $$
+    \text{POP}_{t} = \underbrace{\text{OCC}_{t_0} \times \text{PPH}_{t_0}}_{\text{Census Assumptions}} \times \underbrace{\color{red}{\text{HU}_{t}.}}_{\text{Monthly Est.}} 
+    $$ {#eq-hu-method}
+
+-   The key to the housing unit method is to estimate shifts in the housing stock in the future.
+
+-   This is where time series modeling comes in!
+
+-   As an example, we can collect monthly data on new housing supply (starts) from the U.S. Census Bureau.
+
+    -   Chose Not Seasonally Adjusted starts for this exercise, although the Census Bureau does release them.
+
+## Time Series Plots
+
+```{r}
+df_hsg_starts %>% 
+  
+  # Place regions in rows
+  pivot_longer(cols = Northeast:West,
+               names_to = "region",
+               values_to = "starts") %>% 
+  
+  # Make plot
+  ggplot(data = ., aes(x = date, y = starts)) +
+  
+  # Time Series plot
+  geom_line(linewidth = 0.8, color = "darkred") +
+  
+  # General lebelling
+  theme_minimal() +
+  labs(y = "Housing Starts (000s)",
+       x = element_blank()) +
+  
+  # Grid plots by region
+  facet_wrap(~region, scales = "free_y")
+  
+```
+
+What do we see?
+
+## Stationarity
+
+### ADF Tests in Levels
+
+All four regions appear to be non-stationarity upon visual inspection. To confirm this, we perform Augmented Dickey-Fuller (ADF) tests for each series across a series of lags:
+
+```{r}
+#| echo: false
+
+# Define the lags to test
+lags <- c(3, 6, 9, 12)
+
+# Initialize an empty list to store results for each metric
+adf_statistic <- list()
+adf_p_value <- list()
+
+# Perform ADF test for each column and each lag
+for (col in names(df_hsg_starts)[2:5]) {
+  stat_results <- numeric(length(lags))
+  pval_results <- numeric(length(lags))
+  
+  for (i in seq_along(lags)) {
+    # Perform the ADF test
+    test_result <- adf.test(df_hsg_starts[[col]], k = lags[i])
+    
+    # Store the test statistic and p-value
+    stat_results[i] <- test_result$statistic
+    pval_results[i] <- test_result$p.value
+  }
+  
+  # Store the results in the list with column names
+  adf_statistic[[col]] <- stat_results
+  adf_p_value[[col]] <- pval_results
+}
+
+# Convert the lists to data frames for easier display
+adf_statistic_df <- data.frame(Lag = lags, adf_statistic)
+adf_p_value_df <- data.frame(Lag = lags, adf_p_value)
+
+# Print the results
+cat("ADF Test Statistics:\n")
+print(round(adf_statistic_df, digits = 3))
+
+cat("\nADF Test P-Values:\n")
+print(round(adf_p_value_df, digits = 3))
+
+```
+
+We fail to reject the null that the housing starts in the Northeast and West regions across all lags, lags 9 and 12 in the Midwest, and in lags 6 through 12 in the South.
+
+-   We have strong evidence that the series are non-stationary... try differencing.
+
+## Stationarity
+
+### ADF Tests in First Differences
+
+That looks better - now the series are difference-stationary for each region.
+
+-   Now we can examine the autocorrelations to determine what order $ARMA(p,q)$ models would be preferred.
+
+```{r}
+#| echo: false
+
+# Define the lags to test
+lags <- c(3, 6, 9, 12)
+
+# Initialize an empty list to store results for each metric
+adf_statistic <- list()
+adf_p_value <- list()
+
+# Perform ADF test for each column and each lag
+for (col in names(df_hsg_starts)[2:5]) {
+  stat_results <- numeric(length(lags))
+  pval_results <- numeric(length(lags))
+  
+  for (i in seq_along(lags)) {
+    # Perform the ADF test
+    test_result <- adf.test(diff(df_hsg_starts[[col]]), k = lags[i])
+    
+    # Store the test statistic and p-value
+    stat_results[i] <- test_result$statistic
+    pval_results[i] <- test_result$p.value
+  }
+  
+  # Store the results in the list with column names
+  adf_statistic[[col]] <- stat_results
+  adf_p_value[[col]] <- pval_results
+}
+
+# Convert the lists to data frames for easier display
+adf_statistic_df <- data.frame(Lag = lags, adf_statistic)
+adf_p_value_df <- data.frame(Lag = lags, adf_p_value)
+
+# Print the results
+cat("ADF Test Statistics:\n")
+print(round(adf_statistic_df, digits = 3))
+
+cat("\nADF Test P-Values:\n")
+print(round(adf_p_value_df, digits = 3))
+
+```
+
+## Autocorrelation
+
+Below are the autocorrelation plots for each of the four regions in first differences. We observe:
+
+-   Each region appears strongly correlated with the first lag and the second lag in the Midwest and West.
+
+-   The Northeast and South regions appear to show seasonal correlation.
+
+```{r acf-plots}
+#| echo: false
+#| fig-pos: 'C'
+
+# Autocorrelation Plots ----
+    
+# Prepare the data
+regions <- c("Northeast", "Midwest", "South", "West")
+
+
+acf_plot <- function(data, region_name) {
+  acf_object <- Acf(diff(df_hsg_starts[[region_name]]), plot = FALSE)
+  acf_data <- data.frame(
+    region = region_name,
+    lag = acf_object$lag,
+    acf = acf_object$acf
+  )
+  
+  #ggplot(acf_data, aes(x = lag, y = acf)) +
+  #  geom_bar(stat = "identity", fill = "skyblue", width = 0.5, color = "skyblue") +
+  #  ggtitle(paste(region_name, "Region")) +
+  #  theme_minimal() +
+  #  ylab("ACF") +
+  #  xlab("Lag")
+}
+
+
+# Create ACF plots for each region
+acf_data <- map_dfr(
+  .x = regions,
+  .f = acf_plot,
+  data = df_hsg_starts
+)
+
+
+acf_data %>% 
+  
+  # Make plot
+  ggplot(data = ., aes(x = lag, y = acf)) +
+  
+  # Time Series plot
+  geom_col(size = 0.8, fill = "darkred") +
+  
+  # General lebelling
+  theme_minimal() +
+  labs(y = "Rho",
+       x = element_blank()) +
+  
+  # Grid plots by region
+  facet_wrap(~region, scales = "free_y")
+
+```
+
+## Forecasting Approaches
+
+Now that we have a few idea of how our data look, let's try out a few forecasting approaches from both traditional time series methods `auto.arima` and `seasonal` and some machine learning approaches using `caret`:
+
+1.  ARIMA modeling with auto selection.
+2.  RegARIMA modeling with X-13ARIMA-SEATS.
+3.  Random Forest: a random forest model trained on the first 3 lags.
+4.  XGBoost: also trained on the first 3 lags.
+5.  Ensemble Forecast: average of the above methods.
+
+## Comparing Forecasting Approaches
+
+```{r}
+#| cache: true
+#| echo: false
+#| warning: false
+#| message: false
+#| results: 'hide'
+
+# Function to create forecasts using ARIMA and ensemble methods
+forecast_comparison <- function(region_name, data, h = 12) {
+  
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::
+  # Data Prep
+  
+  # Place in a time series
+  ts_data <- ts(data[[region_name]], 
+                frequency = 12,
+                start = c(2000, 1), 
+                end = c(2024, 7))
+  
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::
+  # Automatic ARIMA Fit
+  
+  # ARIMA forecast
+  arima_fit <- auto.arima(ts_data)
+  #print(summary(arima_fit))
+  arima_forecast <- forecast(arima_fit, h = h)
+  
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::
+  # X-13ARIMA-SEATS
+  
+  x13_model <- seasonal::seas(
+    x = ts(data[[region_name]], 
+           frequency = 12,
+           start = c(2000, 1), 
+           end = c(2024, 7)),
+    x11 = "",
+    transform.function = "auto",
+    dir = paste0("x13spec/", region_name))
+  
+  # Collect forecast
+  x13_forecast <- series(x13_model, "forecast.forecasts")[1:12]
+  
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::
+  # Data Prep for `caret`
+  
+  # Random Forest on lags
+  df_lags <- data.frame(lag1 = stats::lag(ts_data, 1),
+                        lag2 = stats::lag(ts_data, 2),
+                        lag3 = stats::lag(ts_data, 3),
+                        y = ts_data)
+  df_lags <- na.omit(df_lags) # Remove NA values due to lagging
+  
+  
+  # Run model
+  train_control <- trainControl(method = "cv", number = 5)
+  
+  
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::
+  # Machine Learning Methods
+  
+  # Random Forest
+  rf_model <- train(y ~ ., 
+                    data = df_lags, 
+                    method = "rf", 
+                    trControl = train_control,
+                     verbosity = 0)
+  rf_forecast <- predict(rf_model, newdata = df_lags[(nrow(df_lags) - h + 1):nrow(df_lags), 1:3])
+  
+  # XGBoost
+  xgb_model <- train(y ~ ., 
+                     data = df_lags, 
+                     method = "xgbTree", 
+                     trControl = train_control,
+                     verbosity = 0)
+  xgb_forecast <- predict(xgb_model, 
+                          newdata = df_lags[(nrow(df_lags) - h + 1):nrow(df_lags), 1:3])
+  
+  
+  # ::::::::::::::::::::::::::::::::::::::::::::::::::::
+  # Output Results
+  
+  
+  # Combining forecasts from ARIMA, Random Forest, and XGBoost
+  combined_forecast <- (arima_forecast$mean + rf_forecast + xgb_forecast + x13_forecast) / 4
+  
+  # Combine results into a data frame for plotting
+  results <- data.frame(
+    date = seq(from = as.Date("2024-07-01") + months(1),
+                to   = as.Date("2024-07-01") + months(12),
+                by = "1 month"),
+    AutoARIMA = as.numeric(arima_forecast$mean),
+    Random_Forest = rf_forecast,
+    XGBoost = xgb_forecast,
+    Ensemble = combined_forecast,
+    X13 = x13_forecast
+  )
+  
+  results <- gather(results, key = "Method", value = "Forecast", -date)
+  results$Region <- region_name
+  
+  return(results)
+  
+}
+
+# Apply the forecasting function to each region
+forecast_results <- map_dfr(
+  .x = regions, 
+  .f = forecast_comparison, 
+  data = df_hsg_starts)
+
+
+df_hsg_hist <- df_hsg_starts %>% 
+  
+  # Place in long form
+  pivot_longer(
+    cols = Northeast:West,
+    names_to = "Region",
+    values_to = "Forecast"
+  ) %>% 
+  
+  # For labeling
+  mutate(Method = "Historical")
+
+
+```
+
+```{r}
+
+# Plot the forecasts for each region and method
+forecast_results %>% 
+  
+  # Add the historical data
+  bind_rows(df_hsg_hist) %>% 
+  
+  # Keep last 5 years
+  filter(date >= "2018-01-01") %>% 
+  
+  # Make a plot
+  ggplot(data = ., aes(x = date, 
+                       y = Forecast, 
+                       color = Method, 
+                       group = Method)) +
+  
+  # Time series plot
+  geom_line() +
+  facet_wrap(~ Region, scales = "free_y") +
+  labs(x = "Date",
+       y = "Starts (000s)") +
+  theme_minimal() +
+  theme(legend.position = "top",
+        legend.title = element_blank())
+```
+
+## Results
+
+Which forecasts look most reasonable?
+
+-   Automatic ARIMA selection produced similar results between the other methods.
+
+    -   All models chose to take the first difference to stationarize the series.
+
+-   X-13 appears to capture *seasonality* best out of the three.
+
+    -   X-13 always chose a log transformation, no residual autocorrelation or seasonality in the residuals.
+
+-   XGBoost and Random Forests appear to capture *momentum* in each region.
+
+    -   Both methods yielded similar results.
+
+-   The ensemble forecasts temper the *volatility* between each method.
+
+    Which method appears the best?
+
+# Discussion
+
+## Discussion
+
+The topics covered only scratch the surface of time series!
+
+-   Primarily focused on the basics behind univariate time series models and forecasting, additional math available in the Appendix.
+
+<!-- -->
+
+-   Evaluating which model to choose involves both statistical testing, visual inspection, and best judgement.
+
+    -   There is no correct way to approach forecasting, but some are more defensible than others
+
+    -   "All models are wrong, but some are useful" - George E.P. Box
+
+-   In an applied setting, it's important to understand the underlying series and its properties.
+
+# Thank You!
+
+# Appendix
+
+## The Lag Operator
+
+The lag operator is a key component of time series analysis and has a few special properties to note. Recall:
+
+$$
+\begin{align}
+L y_{t}            &\equiv y_{t-1} \\
+\implies L^2 y_{t} &\equiv y_{t-2} \\
+\implies L^k y_{t} &\equiv y_{t-k}.
+\end{align}
+$$
+
+This leads to two nice properties.
+
+1.  The lag operator is commutative with scalar multiplication:
+
+    $$
+    c L y_{t} = c y_{t-1},\quad c \in \mathbb{R}.
+    $$
+
+2.  The lag operator is linear and therefore is distributive and associative:
+
+    $$
+    L(a y_t + b x_t) = aLy_t + b L x_t, \quad a,b \in \mathbb{R}.
+    $$
+
+## Proof of Theorem 1 {#sec-theorem1}
+
+I start with the AR(1) model
+
+$$
+y_{t} = \phi_1 y_{t-1} + e_{t}.
+$$
+
+Re-writing with lag operators, we have
+
+$$
+\begin{align}
+y_{t} &= \phi_1 L y_{t} + e_{t} \\
+\implies y_{t} &= (1-\phi_1 L)^{-1} e_{t}.
+\end{align}
+$$
+
+Letting $z\equiv \phi_1 L$, we observe for the geometric series
+
+$$
+(1-z)^{-1} = 1 + z + z^2 + \ldots\quad\text{for}~|z| < 1.
+$$
+
+For $|L \phi_{1}| < 1$ we can therefore re-write
+
+$$
+y_{t} = (1 + \phi_1 L + \phi_1 L^2 + \phi_1 L^3 + \ldots) e_{t} = \sum_{j=0}^{\infty} \phi_1^j e_{t-j}. \blacksquare
+$$
+
+## Aside: Why is called a Unit Root?
+
+Consider the following stochastic difference equation using the lag operator
+
+$$
+\begin{align*}
+         &\quad         y_t = y_{t-1} + u_t \\
+\implies &\quad         y_t = L y_t + u_t \\
+\implies &\quad (1 - L) y_t = u_t.
+\end{align*}
+$$
+
+Notice that the equation $(1- L) = 0$ has the root $L = 1$, hence *unit root*. Notice in the previous proof we assumed $\phi_1$ was in the unit circle, allowing us to invert the AR(1) into an MA($\infty$). This highlights the crucial point that not all AR models are invertible.
+
+## Impulse Response Functions
+
+Consider the generic MA(q) process
+
+$$
+y_t = e_{t} + \theta_1 e_{t-1} + \theta_2 e_{t-2} + \ldots + \theta_q e_{t-q}.
+$$
+
+By differentiating w.r.t previous lags we uncover the *impulse response function*, which measures the effect of past shocks on $y_t$, where
+
+$$
+\frac{d y_{t}}{d e_{t-j}} = \begin{cases} \theta_j,& \quad j = 1, \ldots, q \\
+0,& \quad j = q+1, q+2, \ldots  \end{cases}
+$$
+
+Impulse response functions are useful to test how a shock at time $t$ propagates over time.
+
+-   Highly useful for macroeconomic policy evaluation, such as how an interest rate shock affects demand and the speed at which the shock dissipates.
+
+# Multivariate Time Series
+
+## Vector Autoregression (1 of 4)
+
+### General Form
+
+Consider two time series $y_{t}$ and $x_{t}$ that may be related to one another. A first order *vector autoregression* for the system is
+
+$$
+\begin{align}
+y_{t} &= \phi_{11} y_{t-1} + \phi_{12} x_{t-1} + u_{t}  \\
+x_{t} &= \phi_{21} y_{t-1} + \phi_{22} x_{t-1} + v_{t}
+\end{align}
+$$ {#eq-var-1}
+
+In words, each variable depends on its lag and the other variable. It is straightforward to represent this $VAR(1)$ system using matrix algrebra as
+
+$$
+\begin{pmatrix}y_t \\x_t\end{pmatrix} = \begin{pmatrix}\phi_{11} & \phi_{12} \\\phi_{21} & \phi_{22}\end{pmatrix}\begin{pmatrix}y_{t-1} \\x_{t-1}\end{pmatrix}+\begin{pmatrix}u_{t} \\v_{t}\end{pmatrix}.
+$$
+
+Or, in vector form,
+
+$$
+Z_{t} = \phi Z_{t-1} + w_{t}.
+$$
+
+## Vector Autoregression (2 of 4)
+
+### Stationarity
+
+For the bivariate system above,
+
+1.  $\{y_{t},x_{t}\}$ are both stationary if the eigenvalues of matrix $\phi$ are less than one in absolute value.
+2.  $\{y_{t},x_{t}\}$ are integrated of order one and cointegrated if one eigenvalue is one and the other is less than one in absolute value.
+3.  $\{y_{t},x_{t}\}$ are both integrated of order two if both eigenvalues of matrix $\phi$ are one.
+
+## Vector Autoregression (3 of 4)
+
+### (Optional) Showing Stationarity in the VAR(1)
+
+Using recursive substitution we can re-write the $VAR(1)$ as
+
+$$
+Z_t = \phi^t Z_0 + \phi^{t-1} w_1 + \ldots + w_t. 
+$$
+
+We know that the series is stationary if the past shocks $w_{t}$ decay over time, or
+
+$$
+\lim_{t\rightarrow\infty}\phi^t =0 \iff |\lambda_{i}| < 1, i = 1, 2,
+$$
+
+where $\lambda_{i}$ are the eigenvalues of $\phi$.
+
+## Vector Autoregression (4 of 4)
+
+An eigenvalue $\lambda$ satisfies the following
+
+$$
+\begin{align}
+A v &= \lambda v \\
+    \implies (A - \lambda I)v &= 0,
+\end{align}
+$$ {#eq-characteristic}
+
+where $I$ is the identity matrix. The eigenvalues $\lambda$ can be found by solving
+
+$$
+\det(A - \lambda I) = 0.
+$$
+
+For a $2\times2$ matrix $A_{2\times2}$, we find eigenvalues $\lambda$ by solving
+
+$$
+\begin{vmatrix}a_{11} - \lambda & a_{12} \\a_{21} & a_{22} - \lambda\end{vmatrix} = (a_{11} - \lambda)(a_{22} - \lambda) - a_{12} a_{21} = 0
+$$
+
+which simplifies to the polynomial
+
+$$
+\lambda^2 - (a_{11} + a_{22})\lambda + (a_{11}a_{22} - a_{12}a_{21}) = 0.
+$$
+
+We can then obtain the values for $\lambda_1$, $\lambda_2$ using the quadratic formula.
+
+<!-- ## Cointegration (1 of) -->
+
+<!-- ### Spurious Regression -->
+
+<!-- Consider the regression of $y_{t}$ on ${x_t}$ -->
+
+<!-- $$ -->
+
+<!-- y_{t} = \beta x_{t} + u_{t}, -->
+
+<!-- $$ -->
+
+<!-- where both $y_{t}$ and ${x_t}$ are non-stationary. If there is no $\beta$ such that the residual $u_{t} = y_{t} - \beta x_{t}$ is stationary, OLS will provide a spurious result. -->
+
+<!-- -   Why? If both series are non-stationary, each series may contain unrelated trends that appear related. -->
+
+<!-- -   For example, consider employment and vehicle miles driven per capita, both of which trend upward. Applying PLS would show a positive $\beta$ despite a non-causal relationship between the two series. -->
+
+<!-- ## Cointegration -->
+
+<!-- ### (Optional) Example -->
+
+<!-- Suppose $y_{t}$ and $x_{t}$ follow a *random walk,* -->
+
+<!-- $$ -->
+
+<!-- \begin{align} -->
+
+<!-- y_{t} &= y_{t-1} + u_{t} \\ -->
+
+<!-- x_{t} &= x_{t-1} + v_{t}. -->
+
+<!-- \end{align} -->
+
+<!-- $$ -->
+
+<!-- These two processes are non-stationary and independent. A regression of $y_{t}$ on $x_{t}$ would compute $\beta$ as -->
+
+<!-- $$ -->
+
+<!-- \hat{\beta}=\frac{\sum_{t=1}^{T}y_{t} x_{t}} {\sum_{t=1}^{T} x^{2}_{t}} \implies \frac{\int W_y(t)W_x(t)}{\int W_x(t)^2}\equiv B, -->
+
+<!-- $$ -->
+
+<!-- where $W_y(t)$ and $W_x(t)$ are independent Brownian motions, the continuous time analog to the random walk. If $y_t$ and $x_t$ are independent stationary series, $\hat{\beta}$ will converge to zero. If the two series are independent, as $T$ grows large the numerator will converge in distribution to -->
+
+<!-- $$ -->
+
+<!-- \frac{1}{\sqrt{T}} \sum_{t=1}^T x_t y_t \overset{d}{\longrightarrow} \mathcal{N}(0, \sigma^2) -->
+
+<!-- $$ -->
+
+## Cointegration
+
+### Definition
+
+*Cointegration* is when two or more non-stationary time series are related such that a linear combination of each is jointly stationary. Consider the two non-stationary processes $y_{t}$ and $x_{t}$. If the residual
+
+$$
+z_{t} = y_{t} - \beta x_{t}
+$$
+
+is stationary, then we say that the two series are *cointegrated*. In words, this means we can find some $\beta$ such that there exists some linear combination of the two series that is stationary.
+
+-   While both $y_{t}$ and $x_{t}$ may be non-stationary, for example, both may be trending in similar directions or show similar patterns, cointegration suggests that both series move together in the long-run.
+
+-   This means we can model both short- and long-term dynamics between each series.
+
+## Error Correction Models
+
+*Error correction models* (ECMs) provide a means to model non-stationary series that share a joint long-term equilibrium. The basic ECM follows
+
+$$
+\begin{align}
+\Delta y_{t} &= \alpha z_{t-1} + \gamma_1 \Delta y_{t-1} + \ldots + \gamma_{p-1} \Delta y_{t - p + 1} + e_{t} \\
+z_{t-1} &= \beta y_{t-1}.
+\end{align}
+$$
+
+The term $z_{t-1}$ measures the disequilibrium between the two series and $\beta$ is the cointegrating vector. When do we choose to run an ECM over a VAR?
+
+-   First, test all of the series for stationarity. If all are stationary, run a $VAR(p)$ in either levels or differences.
+
+-   If there is non-stationarity, apply a cointegration (Johansen test) test to the data. If the series are not cointegrated, run a $VAR(p)$ in differences. Otherwise, run an ECM.

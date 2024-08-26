@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="LMU_Time_Series_files/libs/clipboard/clipboard.min.js"></script>
+<script src="LMU_Time_Series_files/libs/quarto-html/tabby.min.js"></script>
+<script src="LMU_Time_Series_files/libs/quarto-html/popper.min.js"></script>
+<script src="LMU_Time_Series_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="LMU_Time_Series_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="LMU_Time_Series_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="LMU_Time_Series_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="LMU_Time_Series_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.4.553">
+
+  <meta name="author" content="Andrew C. Forrester">
+  <meta name="dcterms.date" content="2024-08-22">
+  <title>A (Very) Brief Introduction Time Series Analysis and Forecasting</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="LMU_Time_Series_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="LMU_Time_Series_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="LMU_Time_Series_files/libs/revealjs/dist/theme/quarto.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="LMU_Time_Series_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="LMU_Time_Series_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="LMU_Time_Series_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="LMU_Time_Series_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+
+  .callout {
+    margin-top: 1em;
+    margin-bottom: 1em;  
+    border-radius: .25rem;
+  }
+
+  .callout.callout-style-simple { 
+    padding: 0em 0.5em;
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+    display: flex;
+  }
+
+  .callout.callout-style-default {
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+  }
+
+  .callout .callout-body-container {
+    flex-grow: 1;
+  }
+
+  .callout.callout-style-simple .callout-body {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-style-default .callout-body {
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-titled.callout-style-simple .callout-body {
+    margin-top: 0.2em;
+  }
+
+  .callout:not(.callout-titled) .callout-body {
+      display: flex;
+  }
+
+  .callout:not(.no-icon).callout-titled.callout-style-simple .callout-content {
+    padding-left: 1.6em;
+  }
+
+  .callout.callout-titled .callout-header {
+    padding-top: 0.2em;
+    margin-bottom: -0.2em;
+  }
+
+  .callout.callout-titled .callout-title  p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+    
+  .callout.callout-titled.callout-style-simple .callout-content  p {
+    margin-top: 0;
+  }
+
+  .callout.callout-titled.callout-style-default .callout-content  p {
+    margin-top: 0.7em;
+  }
+
+  .callout.callout-style-simple div.callout-title {
+    border-bottom: none;
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: 75%;
+  }
+
+  .callout.callout-style-default  div.callout-title {
+    border-bottom: none;
+    font-weight: 600;
+    opacity: 85%;
+    font-size: 0.9rem;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-default div.callout-content {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-simple .callout-icon::before {
+    height: 1rem;
+    width: 1rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+  }
+
+  .callout.callout-style-default .callout-icon::before {
+    height: 0.9rem;
+    width: 0.9rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 0.9rem 0.9rem;
+  }
+
+  .callout-title {
+    display: flex
+  }
+    
+  .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  .callout.no-icon::before {
+    display: none !important;
+  }
+
+  .callout.callout-titled .callout-body > .callout-content > :last-child {
+    padding-bottom: 0.5rem;
+    margin-bottom: 0;
+  }
+
+  .callout.callout-titled .callout-icon::before {
+    margin-top: .5rem;
+    padding-right: .5rem;
+  }
+
+  .callout:not(.callout-titled) .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  /* Callout Types */
+
+  div.callout-note {
+    border-left-color: #4582ec !important;
+  }
+
+  div.callout-note .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEU0lEQVRYCcVXTWhcVRQ+586kSUMMxkyaElstCto2SIhitS5Ek8xUKV2poatCcVHtUlFQk8mbaaziwpWgglJwVaquitBOfhQXFlqlzSJpFSpIYyXNjBNiTCck7x2/8/LeNDOZxDuEkgOXe++553zfefee+/OYLOXFk3+1LLrRdiO81yNqZ6K9cG0P3MeFaMIQjXssE8Z1JzLO9ls20MBZX7oG8w9GxB0goaPrW5aNMp1yOZIa7Wv6o2ykpLtmAPs/vrG14Z+6d4jpbSKuhdcSyq9wGMPXjonwmESXrriLzFGOdDBLB8Y6MNYBu0dRokSygMA/mrun8MGFN3behm6VVAwg4WR3i6FvYK1T7MHo9BK7ydH+1uurECoouk5MPRyVSBrBHMYwVobG2aOXM07sWrn5qgB60rc6mcwIDJtQrnrEr44kmy+UO9r0u9O5/YbkS9juQckLed3DyW2XV/qWBBB3ptvI8EUY3I9p/67OW+g967TNr3Sotn3IuVlfMLVnsBwH4fsnebJvyGm5GeIUA3jljERmrv49SizPYuq+z7c2H/jlGC+Ghhupn/hcapqmcudB9jwJ/3jvnvu6vu5lVzF1fXyZuZZ7U8nRmVzytvT+H3kilYvH09mLWrQdwFSsFEsxFVs5fK7A0g8gMZjbif4ACpKbjv7gNGaD8bUrlk8x+KRflttr22JEMRUbTUwwDQScyzPgedQHZT0xnx7ujw2jfVfExwYHwOsDTjLdJ2ebmeQIlJ7neo41s/DrsL3kl+W2lWvAga0tR3zueGr6GL78M3ifH0rGXrBC2aAR8uYcIA5gwV8zIE8onoh8u0Fca/ciF7j1uOzEnqcIm59sEXoGc0+z6+H45V1CvAvHcD7THztu669cnp+L0okAeIc6zjbM/24LgGM1gZk7jnRu1aQWoU9sfUOuhrmtaPIO3YY1KLLWZaEO5TKUbMY5zx8W9UJ6elpLwKXbsaZ4EFl7B4bMtDv0iRipKoDQT2sNQI9b1utXFdYisi+wzZ/ri/1m7QfDgEuvgUUEIJPq3DhX/5DWNqIXDOweC2wvIR90Oq3lDpdMIgD2r0dXvGdsEW5H6x6HLRJYU7C69VefO1x8Gde1ZFSJLfWS1jbCnhtOPxmpfv2LXOA2Xk2tvnwKKPFuZ/oRmwBwqRQDcKNeVQkYcOjtWVBuM/JuYw5b6isojIkYxyYAFn5K7ZBF10fea52y8QltAg6jnMqNHFBmGkQ1j+U43HMi2xMar1Nv0zGsf1s8nUsmUtPOOrbFIR8bHFDMB5zL13Gmr/kGlCkUzedTzzmzsaJXhYawnA3UmARpiYj5ooJZiUoxFRtK3X6pgNPv+IZVPcnwbOl6f+aBaO1CNvPW9n9LmCp01nuSaTRF2YxHqZ8DYQT6WsXT+RD6eUztwYLZ8rM+rcPxamv1VQzFUkzFXvkiVrySGQgJNvXHJAxiU3/NwiC03rSf05VBaPtu/Z7/B8Yn/w7eguloAAAAAElFTkSuQmCC');
+  }
+
+  div.callout-note.callout-style-default .callout-title {
+    background-color: #dae6fb
+  }
+
+  div.callout-important {
+    border-left-color: #d9534f !important;
+  }
+
+  div.callout-important .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEKklEQVRYCcVXTWhcVRS+575MJym48A+hSRFr00ySRQhURRfd2HYjk2SSTokuBCkU2o0LoSKKraKIBTcuFCoidGFD08nkBzdREbpQ1EDNIv8qSGMFUboImMSZd4/f9zJv8ibJMC8xJQfO3HPPPef7zrvvvnvviIkpC9nsw0UttFunbUhpFzFtarSd6WJkStVMw5xyVqYTvkwfzuf/5FgtkVoB0729j1rjXwThS7Vio+Mo6DNnvLfahoZ+i/o32lULuJ3NNiz7q6+pyAUkJaFF6JwaM2lUJlV0MlnQn5aTRbEu0SEqHUa0A4AdiGuB1kFXRfVyg5d87+Dg4DL6m2TLAub60ilj7A1Ec4odSAc8X95sHh7+ZRPCFo6Fnp7HfU/fBng/hi10CjCnWnJjsxvDNxWw0NfV6Rv5GgP3I3jGWXumdTD/3cbEOP2ZbOZp69yniG3FQ9z1jD7bnBu9Fc2tKGC2q+uAJOQHBDRiZX1x36o7fWBs7J9ownbtO+n0/qWkvW7UPIfc37WgT6ZGR++EOJyeQDSb9UB+DZ1G6DdLDzyS+b/kBCYGsYgJbSQHuThGKRcw5xdeQf8YdNHsc6ePXrlSYMBuSIAFTGAtQo+VuALo4BX83N190NWZWbynBjhOHsmNfFWLeL6v+ynsA58zDvvAC8j5PkbOcXCMg2PZFk3q8MjI7WAG/Dp9AwP7jdGBOOQkAvlFUB+irtm16I1Zw9YBcpGTGXYmk3kQIC/Cds55l+iMI3jqhjAuaoe+am2Jw5GT3Nbz3CkE12NavmzN5+erJW7046n/CH1RO/RVa8lBLozXk9uqykkGAyRXLWlLv5jyp4RFsG5vGVzpDLnIjTWgnRy2Rr+tDKvRc7Y8AyZq10jj8DqXdnIRNtFZb+t/ZRtXcDiVnzpqx8mPcDWxgARUqx0W1QB9MeUZiNrV4qP+Ehc+BpNgATsTX8ozYKL2NtFYAHc84fG7ndxUPr+AR/iQSns7uSUufAymwDOb2+NjK27lEFocm/EE2WpyIy/Hi66MWuMKJn8RvxIcj87IM5Vh9663ziW36kR0HNenXuxmfaD8JC7tfKbrhFr7LiZCrMjrzTeGx+PmkosrkNzW94ObzwocJ7A1HokLolY+AvkTiD/q1H0cN48c5EL8Crkttsa/AXQVDmutfyku0E7jShx49XqV3MFK8IryDhYVbj7Sj2P2eBxwcXoe8T8idsKKPRcnZw1b+slFTubwUwhktrfnAt7J++jwQtLZcm3sr9LQrjRzz6cfMv9aLvgmnAGvpoaGLxM4mAEaLV7iAzQ3oU0IvD5x9ix3yF2RAAuYAOO2f7PEFWCXZ4C9Pb2UsgDeVnFSpbFK7/IWu7TPTvBqzbGdCHOJQSxiEjt6IyZmxQyEJHv6xyQsYk//moVFsN2zP6fRImjfq7/n/wFDguUQFNEwugAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-important.callout-style-default .callout-title {
+    background-color: #f7dddc
+  }
+
+  div.callout-warning {
+    border-left-color: #f0ad4e !important;
+  }
+
+  div.callout-warning .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAETklEQVRYCeVWW2gcVRg+58yaTUnizqbipZeX4uWhBEniBaoUX1Ioze52t7sRq6APio9V9MEaoWlVsFasRq0gltaAPuxms8lu0gcviE/FFOstVbSIxgcv6SU7EZqmdc7v9+9mJtNks51NTUH84ed889/PP+cmxP+d5FIbMJmNbpREu4WUkiTtCicKny0l1pIKmBzovF2S+hIJHX8iEu3hZJ5lNZGqyRrGSIQpq15AzF28jgpeY6yk6GVdrfFqdrD6Iw+QlB8g0YS2g7dyQmXM/IDhBhT0UCiRf59lfqmmDvzRt6kByV/m4JjtzuaujMUM2c5Z2d6JdKrRb3K2q6mA+oYVz8JnDdKPmmNthzkAk/lN63sYPgevrguc72aZX/L9C6x09GYyxBgCX4NlvyGUHOKELlm5rXeR1kchuChJt4SSwyddZRXgvwMGvYo4QSlk3/zkHD8UHxwVJA6zjZZqP8v8kK8OWLnIZtLyCAJagYC4rTGW/9Pqj92N/c+LUaAj27movwbi19tk/whRCIE7Q9vyI6yvRpftAKVTdUjOW40X3h5OXsKCdmFcx0xlLJoSuQngnrJe7Kcjm4OMq9FlC7CMmScQANuNvjfP3PjGXDBaUQmbp296S5L4DrpbrHN1T87ZVEZVCzg1FF0Ft+dKrlLukI+/c9ENo+TvlTDbYFvuKPtQ9+l052rXrgKoWkDAFnvh0wTOmYn8R5f4k/jN/fZiCM1tQx9jQQ4ANhqG4hiL0qIFTGViG9DKB7GYzgubnpofgYRwO+DFjh0Zin2m4b/97EDkXkc+f6xYAPX0KK2I/7fUQuwzuwo/L3AkcjugPNixC8cHf0FyPjWlItmLxWw4Ou9YsQCr5fijMGoD/zpdRy95HRysyXA74MWOnscpO4j2y3HAVisw85hX5+AFBRSHt4ShfLFkIMXTqyKFc46xdzQM6XbAi702a7sy04J0+feReMFKp5q9esYLCqAZYw/k14E/xcLLsFElaornTuJB0svMuJINy8xkIYuL+xPAlWRceH6+HX7THJ0djLUom46zREu7tTkxwmf/FdOZ/sh6Q8qvEAiHpm4PJ4a/doJe0gH1t+aHRgCzOvBvJedEK5OFE5jpm4AGP2a8Dxe3gGJ/pAutug9Gp6he92CsSsWBaEcxGx0FHytmIpuqGkOpldqNYQK8cSoXvd+xLxXADw0kf6UkJNFtdo5MOgaLjiQOQHcn+A6h5NuL2s0qsC2LOM75PcF3yr5STuBSAcGG+meA14K/CI21HcS4LBT6tv0QAh8Dr5l93AhZzG5ZJ4VxAqdZUEl9z7WJ4aN+svMvwHHL21UKTd1mqvChH7/Za5xzXBBKrUcB0TQ+Ulgkfbi/H/YT5EptrGzsEK7tR1B7ln9BBwckYfMiuSqklSznIuoIIOM42MQO+QnduCoFCI0bpkzjCjddHPN/F+2Yu+sd9bKNpVwHhbS3LluK/0zgfwD0xYI5dXuzlQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-warning.callout-style-default .callout-title {
+    background-color: #fcefdc
+  }
+
+  div.callout-tip {
+    border-left-color: #02b875 !important;
+  }
+
+  div.callout-tip .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAADr0lEQVRYCe1XTWgTQRj9ZjZV8a9SPIkKgj8I1bMHsUWrqYLVg4Ue6v9BwZOxSYsIerFao7UiUryIqJcqgtpimhbBXoSCVxUFe9CTiogUrUp2Pt+3aUI2u5vdNh4dmMzOzHvvezuz8xNFM0mjnbXaNu1MvFWRXkXEyE6aYOYJpdW4IXuA4r0fo8qqSMDBU0v1HJUgVieAXxzCsdE/YJTdFcVIZQNMyhruOMJKXYFoLfIfIvVIMWdsrd+Rpd86ZmyzzjJmLStqRn0v8lzkb4rVIXvnpScOJuAn2ACC65FkPzEdEy4TPWRLJ2h7z4cArXzzaOdKlbOvKKX25Wl00jSnrwVxAg3o4dRxhO13RBSdNvH0xSARv3adTXbBdTf64IWO2vH0LT+cv4GR1DJt+DUItaQogeBX/chhbTBxEiZ6gftlDNXTrvT7co4ub5A6gp9HIcHvzTa46OS5fBeP87Qm0fQkr4FsYgVQ7Qg+ZayaDg9jhg1GkWj8RG6lkeSacrrHgDaxdoBiZPg+NXV/KifMuB6//JmYH4CntVEHy/keA6x4h4CU5oFy8GzrBS18cLJMXcljAKB6INjWsRcuZBWVaS3GDrqB7rdapVIeA+isQ57Eev9eCqzqOa81CY05VLd6SamW2wA2H3SiTbnbSxmzfp7WtKZkqy4mdyAlGx7ennghYf8voqp9cLSgKdqNfa6RdRsAAkPwRuJZNbpByn+RrJi1RXTwdi8RQF6ymDwGMAtZ6TVE+4uoKh+MYkcLsT0Hk8eAienbiGdjJHZTpmNjlbFJNKDVAp2fJlYju6IreQxQ08UJDNYdoLSl6AadO+fFuCQqVMB1NJwPm69T04Wv5WhfcWyfXQB+wXRs1pt+nCknRa0LVzSA/2B+a9+zQJadb7IyyV24YAxKp2Jqs3emZTuNnKxsah+uabKbMk7CbTgJx/zIgQYErIeTKRQ9yD9wxVof5YolPHqaWo7TD6tJlh7jQnK5z2n3+fGdggIOx2kaa2YI9QWarc5Ce1ipNWMKeSG4DysFF52KBmTNMmn5HqCFkwy34rDg05gDwgH3bBi+sgFhN/e8QvRn8kbamCOhgrZ9GJhFDgfcMHzFb6BAtjKpFhzTjwv1KCVuxHvCbsSiEz4CANnj84cwHdFXAbAOJ4LTSAawGWFn5tDhLMYz6nWeU2wJfIhmIJBefcd/A5FWQWGgrWzyORZ3Q6HuV+Jf0Bj+BTX69fm1zWgK7By1YTXchFDORywnfQ7GpzOo6S+qECrsx2ifVQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-tip.callout-style-default .callout-title {
+    background-color: #ccf1e3
+  }
+
+  div.callout-caution {
+    border-left-color: #fd7e14 !important;
+  }
+
+  div.callout-caution .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAACV0lEQVRYCdVWzWoUQRCuqp2ICBLJXgITZL1EfQDBW/bkzUMUD7klD+ATSHBEfAIfQO+iXsWDxJsHL96EHAwhgzlkg8nBg25XWb0zIb0zs9muYYWkoKeru+vn664fBqElyZNuyh167NXJ8Ut8McjbmEraKHkd7uAnAFku+VWdb3reSmRV8PKSLfZ0Gjn3a6Xlcq9YGb6tADjn+lUfTXtVmaZ1KwBIvFI11rRXlWlatwIAAv2asaa9mlB9wwygiDX26qaw1yYPzFXg2N1GgG0FMF8Oj+VIx7E/03lHx8UhvYyNZLN7BwSPgekXXLribw7w5/c8EF+DBK5idvDVYtEEwMeYefjjLAdEyQ3M9nfOkgnPTEkYU+sxMq0BxNR6jExrAI31H1rzvLEfRIdgcv1XEdj6QTQAS2wtstEALLG1yEZ3QhH6oDX7ExBSFEkFINXH98NTrme5IOaaA7kIfiu2L8A3qhH9zRbukdCqdsA98TdElyeMe5BI8Rs2xHRIsoTSSVFfCFCWGPn9XHb4cdobRIWABNf0add9jakDjQJpJ1bTXOJXnnRXHRf+dNL1ZV1MBRCXhMbaHqGI1JkKIL7+i8uffuP6wVQAzO7+qVEbF6NbS0LJureYcWXUUhH66nLR5rYmva+2tjRFtojkM2aD76HEGAD3tPtKM309FJg5j/K682ywcWJ3PASCcycH/22u+Bh7Aa0ehM2Fu4z0SAE81HF9RkB21c5bEn4Dzw+/qNOyXr3DCTQDMBOdhi4nAgiFDGCinIa2owCEChUwD8qzd03PG+qdW/4fDzjUMcE1ZpIAAAAASUVORK5CYII=');
+  }
+
+  div.callout-caution.callout-style-default .callout-title {
+    background-color: #ffe5d0
+  }
+
+  </style>
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">A (Very) Brief Introduction Time Series Analysis and Forecasting</h1>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Andrew C. Forrester 
+</div>
+        <p class="quarto-title-affiliation">
+            </p><div class="line-block">Joint Program in Survey Methodology (JPSM)<br>
+            University of Maryland, College Park<br>
+            <a href="mailto:forresac@umd.edu">forresac@umd.edu</a></div>
+          <p></p>
+    </div>
+</div>
+
+  <p class="date">2024-08-22</p>
+</section>
+<section id="overview" class="slide level2">
+<h2>Overview</h2>
+<p>Objective: Provide a basic overview of high-level time series concepts with a focus on univariate time series and forecasting applications.</p>
+<div>
+<ul>
+<li class="fragment"><p>Provide the basic building blocks of time series analysis, i.e., AR, MA, and ARIMA.</p></li>
+<li class="fragment"><p>Describe some modelling considerations, i.e.&nbsp;non-stationarity, seasonality.</p></li>
+<li class="fragment"><p>Provide a forecasting example with real world data and remarks.</p>
+<ul>
+<li class="fragment">Compare time series forecasting vis-a-vis some machine learning methods.</li>
+</ul></li>
+<li class="fragment"><p>Will upload the slides and code to GitHub as well.</p></li>
+</ul>
+</div>
+</section>
+<section>
+<section id="time-series-basics" class="title-slide slide level1 center">
+<h1>Time Series Basics</h1>
+
+</section>
+<section id="time-series-basics-1-of-2" class="slide level2">
+<h2>Time Series Basics (1 of 2)</h2>
+<p>A time series <span class="math inline">\(y_{t}\)</span> (<span class="math inline">\(\{y_t : t =1, 2, \dots T\}\)</span>) is a sequence of ordered observations of the same variable measured over time.</p>
+<div>
+<ul>
+<li class="fragment"><p>Examples range from economic variables (Gross Domestic Product and consumer prices), finance (asset returns), demographics and vital statistics (births and deaths), environmental (CO2 production, electrical generation), medicine (blood pressure), engineering (vibration, signal to noise), and many more.</p>
+<ul>
+<li class="fragment">Time series analysis is mathematical in nature.</li>
+</ul></li>
+<li class="fragment"><p>Observations can be related to each other over time and usually are.</p>
+<ul>
+<li class="fragment">This is the key issue with time series data, as time dependence breaks down most traditional assumptions in statistics (Law of Large Numbers, Central Limit Thm.).</li>
+</ul></li>
+<li class="fragment"><p>Time can be in years, months, days, even minutes.</p>
+<ul>
+<li class="fragment">Different <em>periodicities</em> require different assumptions, for example leap years with weekly data.</li>
+</ul></li>
+<li class="fragment"><p>Measurements do not necessarily need to be evenly spaced.</p></li>
+</ul>
+</div>
+</section>
+<section id="time-series-basics-2-of-2" class="slide level2">
+<h2>Time Series Basics (2 of 2)</h2>
+<h3 id="some-general-notation">Some General Notation</h3>
+<p>I will use the following notation:</p>
+<ul>
+<li class="fragment"><p><span class="math inline">\(y_{t}\)</span> time series from <span class="math inline">\(t =1, \ldots, T\)</span></p></li>
+<li class="fragment"><p>Lag <span class="math inline">\(k\)</span> of series <span class="math inline">\(y_{t}\)</span>: <span class="math inline">\(y_{t-k}\)</span></p></li>
+<li class="fragment"><p>Lag operator: <span class="math inline">\(Ly_{t} \equiv y_{t-1},~ L^{k}y_{t} \equiv y_{t-k}\)</span></p></li>
+<li class="fragment"><p>Difference operator: <span class="math inline">\(\Delta y_{t} \equiv y_{t} - L y_{t}\)</span></p></li>
+<li class="fragment"><p>White noise process: <span class="math inline">\(e_{t}~\overset{i.i.d.}{\sim} \mathcal{N}(0, \sigma^2)\)</span></p></li>
+<li class="fragment"><p>Sample error term: <span class="math inline">\(u_{t} \overset{i.i.d.}{\sim}\mathcal{N}(0,\sigma^{2}_{u})\)</span></p></li>
+</ul>
+</section></section>
+<section>
+<section id="general-properties" class="title-slide slide level1 center">
+<h1>General Properties</h1>
+
+</section>
+<section id="time-series-properties-1-of-4" class="slide level2">
+<h2>Time Series Properties (1 of 4)</h2>
+<h3 id="autocorrelation">Autocorrelation</h3>
+<p>The key to time series analysis is modelling a series based on relating the past to the present. This involves looking at how <em>autocorrelated</em> the series is over time. Assuming (for now) that the series <span class="math inline">\(y_{t}\)</span> has a constant mean <span class="math inline">\(\mu\)</span>, take the following</p>
+<p><span class="math display">\[
+\begin{align}
+\sigma^{2}_{0} &amp;= E[(y_{t} - \mu)^{2}] &amp; \tt(Variance) \\
+\sigma^{2}_{k} &amp;= E[(y_{t} - \mu)(y_{t-k} - \mu)] &amp; \tt(Autocovariance) \\
+\gamma(k)      &amp;= \frac{\sigma^{2}_{k}}{\sigma^{2}_{0}} &amp; \tt(Autocorrelation) \\
+\end{align}
+\]</span> These represent how <span class="math inline">\(y_{t}\)</span> relates to itself over <span class="math inline">\(k\)</span> periods back in time. These will be key!</p>
+</section>
+<section id="time-series-properties-2-of-4" class="slide level2">
+<h2>Time Series Properties (2 of 4)</h2>
+<h3 id="stationarity">Stationarity</h3>
+<p><strong>Definition</strong>. A time series is (weakly or covariance) <em>stationary</em> if it satisfies the following conditions for all <span class="math inline">\(t\)</span>:</p>
+<p><span class="math display">\[
+\begin{align*}
+E[y_{t}]            &amp;= \mu \\
+Var(y_{t})          &amp;= \sigma^{2}_{y} \\
+Cov(y_{t}, y_{t-k}) &amp;= \sigma^{2}_{k}
+\end{align*}
+\]</span></p>
+<p>The series must have a constant mean (e.g.&nbsp;not trending), constant variance, and its autocovariance <span class="math inline">\(\sigma^{2}_{k}\)</span> must depend only on <span class="math inline">\(k\)</span>.</p>
+</section>
+<section id="time-series-properties-3-of-4" class="slide level2">
+<h2>Time Series Properties (3 of 4)</h2>
+
+<img data-src="LMU_Time_Series_files/figure-revealjs/unnamed-chunk-1-1.png" width="6000" class="r-stretch"></section>
+<section id="time-series-properties-4-of-4" class="slide level2">
+<h2>Time Series Properties (4 of 4)</h2>
+<h3 id="ergodicity">Ergodicity</h3>
+<p>A series is ergodic if the autocovariance <span class="math inline">\(\gamma(k)\)</span> decays to zero as we increase the number of time lags, i.e.,</p>
+<p><span class="math display">\[
+Cov(y_{t}, y_{t-k}) \rightarrow 0~\text{as}~k~\rightarrow~\infty.
+\]</span></p>
+<p>In words, this means that the dependence of <span class="math inline">\(y_{t}\)</span> is short-lived. This is a sufficient condition for the mean to be ergodic, or</p>
+<p><span class="math display">\[
+\frac{1}{T} \sum_{t = 1}^{T} y_{t} \rightarrow E[y_{t}],\quad \text{as}~~T\rightarrow\infty.
+\]</span></p>
+<p>Ergodicity is important to describe whether the <em>time average</em> is an unbiased and consistent estimator of the mean (recall we have a sample of time dependent observations).</p>
+</section></section>
+<section>
+<section id="time-series-models" class="title-slide slide level1 center">
+<h1>Time Series Models</h1>
+
+</section>
+<section id="time-series-regression-models-1-of-2" class="slide level2">
+<h2>Time Series Regression Models (1 of 2)</h2>
+<p>First we start with the building block: the <em>white noise process</em> or shock</p>
+<p><span id="eq-white-noise"><span class="math display">\[
+e_{t}\overset{i.i.d.}{\sim} \mathcal{N}(0, \sigma^{2}).
+\qquad(1)\]</span></span></p>
+<p>The white noise process <span class="math inline">\(e_{t}\)</span> thus has the following characteristics</p>
+<p><span class="math display">\[
+\begin{align*}
+E[e_t] &amp;= 0, \forall~t \\
+E[e_t^2]       &amp;= \sigma^2, \forall~t \\
+E[e_t e_{t-k}] &amp;= 0, \forall t,k
+\end{align*}
+\]</span></p>
+<p>The white noise process has zero mean, fixed variance <span class="math inline">\(\sigma^2\)</span>, and is not serially correlated.</p>
+</section>
+<section id="time-series-regression-models-2-of-2" class="slide level2">
+<h2>Time Series Regression Models (2 of 2)</h2>
+<p>The most basic time series models are linear combinations of the series’ lags and white noise, including the <em>autoregressive</em> <span class="math inline">\(AR(p)\)</span> and <em>moving average</em> <span class="math inline">\(MA(q)\)</span> forms</p>
+<p><span id="eq-basic-models"><span class="math display">\[
+\begin{align*}
+y_{t} &amp;= \phi_0 + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \ldots + \phi_p y_{t-p} + e_t&amp; \quad \tt{AR(p)} \\
+y_{t} &amp;= e_{t} + \theta_1 e_{t-1} + \ldots + \theta_q e_{t-q} &amp; \tt{MA(q)} \\
+y_{t} &amp;= e_{t} + \phi_1 y_{t-1} + \ldots + e_{t} + \theta_1 e_{t-1} + \ldots &amp; \tt{ARMA(p,q)}
+\end{align*}
+\qquad(2)\]</span></span></p>
+<p>In words, AR processes represents <span class="math inline">\(y_t\)</span> as a function of its past realizations <span class="math inline">\(y_{t-p}\)</span> and MA processes as a function of its past shocks <span class="math inline">\(\epsilon_{t-q}\)</span>. The <span class="math inline">\(ARMA(p,q)\)</span> combines the two types of models into one.</p>
+<div>
+<ul>
+<li class="fragment"><p>The <span class="math inline">\(AR(p)\)</span> process can be estimated using simple OLS!</p></li>
+<li class="fragment"><p>The <span class="math inline">\(MA(q)\)</span> and <span class="math inline">\(ARMA(p,q)\)</span> processes are less straightforward because the estimated <span class="math inline">\(\{\theta_q\}\)</span>’s are unobserved.</p>
+<ul>
+<li class="fragment">Therefore maximum likelihood is needed to estimate MA models.</li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section id="regression-examples" class="slide level2">
+<h2>Regression Examples</h2>
+
+<img data-src="LMU_Time_Series_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
+<section id="invertibility-of-the-arma-model-optional" class="slide level2">
+<h2>Invertibility of the AR/MA Model (Optional)</h2>
+<p><strong>Theorem.</strong> An autoregressive model of order one <span class="math inline">\(AR(1)\)</span> is <em>invertible</em> if it can be represented as an <span class="math inline">\(MA(\infty)\)</span> under the condition that it is stationary, i.e., <span class="math inline">\(|\phi_1|&lt;1\)</span>.</p>
+<p><em>Proof.</em> See <a href="#/appendix">Appendix</a>.</p>
+</section>
+<section id="box-jenkins-methodology" class="slide level2">
+<h2>Box-Jenkins Methodology</h2>
+<p>Three strategies to approach fitting an <span class="math inline">\(ARMA(p,q)\)</span> model:</p>
+<ol type="1">
+<li class="fragment"><em>Information Criterion</em>. Fit models over a grid of <span class="math inline">\(AR(p)\)</span> and <span class="math inline">\(MA(q)\)</span> orders; compute information criteria, such as Akaike’s (AIC), Bayesian-Schwartz (BIC); and pick the model with the smallest value. (Most popular method)</li>
+<li class="fragment"><em>Parsimony</em>. Start with the simplest <span class="math inline">\(AR(1)\)</span> model and add lagged regressors until the error term <span class="math inline">\(u_t\)</span> resembles white noise.</li>
+<li class="fragment"><em>General to Specific.</em> Start with a general <span class="math inline">\(AR(p)\)</span> model and work down with fewer lags.</li>
+</ol>
+<div class="fragment">
+<p>Most software packages will implement these procedures automatically, usually (1).</p>
+</div>
+</section>
+<section id="unit-roots-1-of-3" class="slide level2">
+<h2>Unit Roots (1 of 3)</h2>
+<h3 id="overview-1">Overview</h3>
+<p><strong>Definition.</strong> A time series is non-stationary if it contains a unit root.</p>
+<ul>
+<li class="fragment"><p>This raises issues because the WLLN and CLT do not apply</p></li>
+<li class="fragment"><p>Unit root processes require additional modeling considerations, i.e., stationarizing the series</p></li>
+</ul>
+</section>
+<section id="unit-roots-2-of-3" class="slide level2">
+<h2>Unit Roots (2 of 3)</h2>
+<h3 id="example">Example</h3>
+<p>Consider the basic AR(1) model</p>
+<p><span id="eq-ar-1"><span class="math display">\[
+y_t = \phi_0 + \phi_1 y_{t-1} + u_{t}, ~~~ u_{t}\sim \mathcal{N}(0, \sigma^2_u).
+\qquad(3)\]</span></span></p>
+<p>If we have <span class="math inline">\(\phi_1 = 1\)</span>, then by we can show that the process <a href="#/unit-roots-2-of-3" class="quarto-xref">Equation&nbsp;3</a> converges to</p>
+<p><span class="math display">\[
+y_t = \phi_0 t + y_0 + u_0 + \cdots + u_t.
+\]</span></p>
+<p>Therefore, we observe that the mean <span class="math inline">\(E[y_t] = \phi_0 t + y_0\)</span> depends on time.</p>
+</section>
+<section id="unit-roots-3-of-3" class="slide level2">
+<h2>Unit Roots (3 of 3)</h2>
+<h3 id="testing-for-unit-roots">Testing for Unit Roots</h3>
+<p>Consider a basic AR(1) model</p>
+<p><span class="math display">\[
+y_t = \phi_1 y_{t-1} + e_{t}.
+\]</span></p>
+<p>To test for a unit root, we want to test <span class="math inline">\(\phi_1 = 1\)</span>. This can easily be done by estimating the first-difference model</p>
+<p><span class="math display">\[
+\Delta y_{t} = \beta y_{t-1} + e_t,
+\]</span></p>
+<p>where <span class="math inline">\(\beta \equiv \phi_1 - 1\)</span>. We now want to test the new hypotheses</p>
+<p><span class="math display">\[
+\begin{equation}
+\begin{cases}
+H_0: \beta = 0\\
+H_A: \beta &lt; 0.
+\end{cases}
+\end{equation}
+\]</span></p>
+<p>Note that this is a <em>one-sided</em> test. This test can also be run with a trend included, i.e., the Augmented Dickey-Fuller (ADF) test.</p>
+</section>
+<section id="the-arima-model-1-of-3" class="slide level2">
+<h2>The ARIMA Model (1 of 3)</h2>
+<h3 id="trend-v.-difference-stationarity">Trend v. Difference Stationarity</h3>
+<p>Suppose we have the series <span class="math inline">\(y_{t} = a t + u_{t}\)</span> where <span class="math inline">\(a\)</span> is a constant <span class="math inline">\(u_{t} \sim N(0, \sigma^2_u)\)</span>. To make this series stationary, we need to subtract the trend (or detrend) it</p>
+<p><span class="math display">\[
+u_{t} = y_{t} - a t. \quad \tt{(\text{Trend Stationary})}
+\]</span></p>
+<p>In the case of the unit root series where <span class="math inline">\(\phi_1 = 1\)</span>, we have</p>
+<p><span class="math display">\[y_{t} = \phi_0 + y_{t-1} + u_{t}.\]</span> To make this series stationary we can take the first difference</p>
+<p><span class="math display">\[
+u_{t} + \phi_0 = y_{t} - y_{t-1} = \Delta y_{t}.\quad \tt{(\text{Difference Stationary})}
+\]</span></p>
+</section>
+<section id="the-arima-model-2-of-3" class="slide level2">
+<h2>The ARIMA Model (2 of 3)</h2>
+<h3 id="applying-the-arima-model">Applying the ARIMA Model</h3>
+<p>Because we can not apply an <span class="math inline">\(ARMA(p,q)\)</span> model to a non-stationary series, enter the <span class="math inline">\(ARIMA(p,d,q)\)</span> model, where <span class="math inline">\(d\)</span> denotes the order of integration (number of differences).</p>
+<ul>
+<li class="fragment"><p>The <span class="math inline">\(ARIMA(p,d,q)\)</span> model takes a difference <span class="math inline">\(d\)</span> times to achieve stationarity, then applies an <span class="math inline">\(ARMA(p,q)\)</span> model.</p></li>
+<li class="fragment"><p>When choosing an <span class="math inline">\(ARIMA(p,d,q)\)</span> model, first perform ADF tests (with or without trend) and:</p>
+<ul>
+<li class="fragment"><p>For series with evidence of non-stationarity, take differences and apply <span class="math inline">\(ARMA(p,q)\)</span>.</p></li>
+<li class="fragment"><p>For series with no evidence of non-stationarity, detrend if trending and apply <span class="math inline">\(ARMA(p,q)\)</span></p></li>
+</ul></li>
+</ul>
+</section>
+<section id="the-arima-model-3-of-3" class="slide level2">
+<h2>The ARIMA Model (3 of 3)</h2>
+<h3 id="regression-with-arima-errors">Regression with ARIMA Errors</h3>
+<p>RegARIMA is a hybrid model combines external regressors with an ARIMA model</p>
+<ul>
+<li class="fragment"><p>Regression component contains additional explanatory variables, such as outlier treatments, holidays, trading day effects, etc.</p></li>
+<li class="fragment"><p>Fixed regressors can model seasonal effects</p></li>
+<li class="fragment"><p>Will describe a common RegARIMA framework soon…</p></li>
+</ul>
+</section>
+<section id="seasonality-and-the-classical-decomposition" class="slide level2">
+<h2>Seasonality and the Classical Decomposition</h2>
+<p>A time series can be decomposed into <em>trend</em>, <em>seasonal</em>, and <em>irregular</em> components, either additively or multiplicatively as</p>
+<p><span class="math display">\[
+\begin{cases}
+y_t = T_t + S_t + I_t &amp;\tt{(additive)} \\
+y_t = T_t \times S_t \times I_t &amp; \tt{(multiplicative)}
+\end{cases}
+\]</span></p>
+<p>Various methods exist to estimate each compartment, such as X-11 (U.S. Census Bureau), SEATS (Bank of Spain), Seasonal and Trend Decomposition with LOESS (Cleveland et al.).</p>
+<div>
+<ul>
+<li class="fragment">X-11 and SEATS are most common among statistical agencies</li>
+</ul>
+</div>
+</section>
+<section id="aside-x-13arima-seats" class="slide level2">
+<h2>Aside: X-13ARIMA-SEATS</h2>
+<p>The standard method to seasonally adjust time series in the U.S. statistical system is X-13ARIMA-SEATS and it provides numerous useful features.</p>
+<ul>
+<li class="fragment"><p>Software that combines X-11 and SEATS capabilities into one package.</p></li>
+<li class="fragment"><p>Implementations in <em>R</em> <code>seasonal::seas</code> and Python <code>statsmodels</code> are easy to use.</p></li>
+<li class="fragment"><p>Provides extensive diagnostics automatically (seasonal tests, autocorrelation, etc.).</p></li>
+<li class="fragment"><p>Impressive outlier detection abilities.</p></li>
+<li class="fragment"><p>Produces RegARIMA forecasts.</p></li>
+<li class="fragment"><p>Bottom line: X-13 is great!</p></li>
+</ul>
+</section></section>
+<section>
+<section id="forecasting" class="title-slide slide level1 center">
+<h1>Forecasting</h1>
+
+</section>
+<section id="forecasting-arma-models-1-of-2" class="slide level2">
+<h2>Forecasting ARMA Models (1 of 2)</h2>
+<p>A primary focus in this discussion is forecasting the series <span class="math inline">\(y_{t}\)</span>. We know that because the models are mean-zero, the best predictor of <span class="math inline">\(y_{t+1}\)</span> is the conditional mean. Let’s take the <span class="math inline">\(AR(1)\)</span> as an example, where</p>
+<p><span class="math display">\[
+y_{t} = \phi_1 y_{t-1} + e_{t}, \quad t =1,\ldots,T.
+\]</span></p>
+<p>Stepping ahead 1, 2, and <span class="math inline">\(k\)</span> steps we have</p>
+<p><span class="math display">\[
+\begin{align}
+E[y_{T+1} | \Omega_T] &amp;= E[(\phi_1 y_{T} + e_{T+1}) | \Omega_T] = \phi_1 y_T \\
+E[y_{T+2} | \Omega_T] &amp;= E[(\phi_1 y_{T+1} + e_{T+2}) | \Omega_T] = \phi^2_1 y_{T}\\
+               \cdots &amp;= \cdots \\
+E[y_{T+k} | \Omega_T] &amp;= E[(\phi_1 y_{T+k-1} + e_{T+k}) | \Omega_T] = \phi_1^k y_T.
+\end{align}
+\]</span></p>
+<p>Recursion gives us the prediction of <span class="math inline">\(y_{t+k}\)</span> condition on the information set <span class="math inline">\(\Omega_T\)</span> in the final period <span class="math inline">\(T\)</span>.</p>
+</section>
+<section id="forecasting-arma-models-2-of-2" class="slide level2">
+<h2>Forecasting ARMA Models (2 of 2)</h2>
+<p>Now what about the forecasting errors? Notice as we step ahead</p>
+<p><span class="math display">\[
+\begin{align}
+y_{t+1} - E[y_{T+1} | \Omega_T] &amp;= y_{T+1} - \phi_1 Y_T = e_{T+1} \\
+y_{t+2} - E[y_{T+2} | \Omega_T] &amp;= e_{T+2} + \phi_1 e_{T+1} \\
+                         \cdots &amp;= \cdots \\
+y_{t+k} - E[y_{T+k} | \Omega_T] &amp;= e_{T+k} + \phi_1 e_{T+k-1} + \ldots + \phi_1^{k-1} e_{T+1}.
+\end{align}
+\]</span></p>
+<p>Notice that as <span class="math inline">\(k\rightarrow\infty\)</span> the forecasting error <span class="math inline">\(E[y_{T+k}|\Omega_T]\rightarrow 0\)</span>, thus the the forecast converges to the unconditional mean. In words, the unconditional mean is the limit for the long-run forecast. We can construct confidence intervals for the forecast as</p>
+<p><span class="math display">\[
+CI_{\pm 95} = E[y_{t+k} | \Omega_T] \pm 1.96 \times \underbrace{\sqrt{Var(y_{t+k}|\Omega_T)}}_{\text{Uncond'l. Std. Dev.}}\times y_{t+k}.
+\]</span></p>
+</section></section>
+<section>
+<section id="time-series-diagnostics" class="title-slide slide level1 center">
+<h1>Time Series Diagnostics</h1>
+
+</section>
+<section id="plot-the-data-first" class="slide level2">
+<h2>Plot the Data First</h2>
+<p>The best practice when working with time series is to plot them.</p>
+<ul>
+<li class="fragment"><p>“Eye-ball econometrics” can be very useful to determine which pre-tests to run or what models to focus on.</p></li>
+<li class="fragment"><p>What to look for?</p>
+<div>
+<ul>
+<li class="fragment"><p>Is the series trending or does it look roughly random? Is the series too smooth? Structural breaks</p></li>
+<li class="fragment"><p>Are there any noticeable seasonal pattern? Any cyclicality?</p></li>
+<li class="fragment"><p>Are there outliers?</p></li>
+</ul>
+</div></li>
+</ul>
+</section>
+<section id="examining-partial-autocorrelations" class="slide level2">
+<h2>Examining (Partial) Autocorrelations</h2>
+<p>Two key elements of model selection in the Box-Jenkins approach are the Autocorrelation Function (ACF) and the Partial Autocorrelation Function (PACF).</p>
+<ul>
+<li class="fragment"><p><em>Autocorrelation Function</em></p>
+<ul>
+<li class="fragment"><p>The ACF is what we’ve seen before: <span class="math inline">\(\gamma(k) = Cov(y_{t}, y_{t-1})\)</span></p></li>
+<li class="fragment"><p>Useful for identifying the order of an MA process and checking stationarity, slow decay is a sign of non-stationarity.</p></li>
+</ul></li>
+<li class="fragment"><p><em>Partial Autocorrelation Function</em></p>
+<ul>
+<li class="fragment"><p>The PACF represents the correlation between <span class="math inline">\(y_{t}\)</span> and <span class="math inline">\(y_{t-k}\)</span> after projecting out the influence of lags <span class="math inline">\(1, \ldots, k-1\)</span> by fitting a series of autoregressions to <span class="math inline">\(y_{t}\)</span>.</p></li>
+<li class="fragment"><p>This helps identify the order of an AR process.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="analyzing-residuals" class="slide level2">
+<h2>Analyzing Residuals</h2>
+<p>A principal assumption is that the residuals should be white noise. Recall, <span class="math inline">\(e_{t} \overset{i.i.d}{\sim} \mathcal{N}(0, \sigma^2)\)</span>. A crucial test is to test that there is no residual autocorrelation using the Ljung-Box test which tests</p>
+<p><span class="math display">\[
+\begin{cases}
+H_0: \text{Residuals are not autocorrelated up to lag}~m\\
+H_A: \text{Residuals autocorrelated to lag}~m
+\end{cases}
+\]</span></p>
+<p>A related test is the QS test for residual seasonality, which modifies the Ljung-Box test to test seasonal lags. This is especially useful to evaluate models used to seasonally adjust data.</p>
+</section></section>
+<section>
+<section id="empirical-application" class="title-slide slide level1 center">
+<h1>Empirical Application</h1>
+
+</section>
+<section id="empirical-application-housing-starts" class="slide level2">
+<h2>Empirical Application: Housing Starts</h2>
+<p>Some of my current research involves projecting housing supply as an input to produce population estimates.</p>
+<ul>
+<li class="fragment"><p>The housing unit method estimates population by first estimating the housing stock, or housing units <span class="math inline">\(\text{HU}_{t}\)</span> and multiplying by the expected number of people living in them.</p>
+<p><span id="eq-hu-method"><span class="math display">\[
+\text{POP}_{t} = \underbrace{\text{OCC}_{t_0} \times \text{PPH}_{t_0}}_{\text{Census Assumptions}} \times \underbrace{\color{red}{\text{HU}_{t}.}}_{\text{Monthly Est.}}
+\qquad(4)\]</span></span></p></li>
+<li class="fragment"><p>The key to the housing unit method is to estimate shifts in the housing stock in the future.</p></li>
+<li class="fragment"><p>This is where time series modeling comes in!</p></li>
+<li class="fragment"><p>As an example, we can collect monthly data on new housing supply (starts) from the U.S. Census Bureau.</p>
+<ul>
+<li class="fragment">Chose Not Seasonally Adjusted starts for this exercise, although the Census Bureau does release them.</li>
+</ul></li>
+</ul>
+</section>
+<section id="time-series-plots" class="slide level2">
+<h2>Time Series Plots</h2>
+
+<img data-src="LMU_Time_Series_files/figure-revealjs/unnamed-chunk-3-1.png" width="960" class="r-stretch"><p>What do we see?</p>
+</section>
+<section id="stationarity-1" class="slide level2">
+<h2>Stationarity</h2>
+<h3 id="adf-tests-in-levels">ADF Tests in Levels</h3>
+<p>All four regions appear to be non-stationarity upon visual inspection. To confirm this, we perform Augmented Dickey-Fuller (ADF) tests for each series across a series of lags:</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>ADF Test Statistics:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Lag Northeast Midwest  South   West
+1   3    -2.717  -4.633 -4.368 -2.183
+2   6    -1.730  -3.651 -3.197 -1.617
+3   9    -0.802  -2.052 -1.132 -0.937
+4  12    -0.993  -1.231 -0.726 -0.975</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ADF Test P-Values:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Lag Northeast Midwest South  West
+1   3     0.274   0.010 0.010 0.499
+2   6     0.690   0.029 0.089 0.737
+3   9     0.961   0.554 0.916 0.947
+4  12     0.938   0.900 0.967 0.941</code></pre>
+</div>
+</div>
+<p>We fail to reject the null that the housing starts in the Northeast and West regions across all lags, lags 9 and 12 in the Midwest, and in lags 6 through 12 in the South.</p>
+<ul>
+<li class="fragment">We have strong evidence that the series are non-stationary… try differencing.</li>
+</ul>
+</section>
+<section id="stationarity-2" class="slide level2">
+<h2>Stationarity</h2>
+<h3 id="adf-tests-in-first-differences">ADF Tests in First Differences</h3>
+<p>That looks better - now the series are difference-stationary for each region.</p>
+<ul>
+<li class="fragment">Now we can examine the autocorrelations to determine what order <span class="math inline">\(ARMA(p,q)\)</span> models would be preferred.</li>
+</ul>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>ADF Test Statistics:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Lag Northeast Midwest   South   West
+1   3   -10.234 -10.461 -12.409 -9.526
+2   6   -10.453 -10.217  -9.714 -9.738
+3   9   -10.255 -12.199 -17.251 -8.782
+4  12    -3.677  -7.371  -5.943 -3.879</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ADF Test P-Values:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Lag Northeast Midwest South  West
+1   3     0.010    0.01  0.01 0.010
+2   6     0.010    0.01  0.01 0.010
+3   9     0.010    0.01  0.01 0.010
+4  12     0.026    0.01  0.01 0.015</code></pre>
+</div>
+</div>
+</section>
+<section id="autocorrelation-1" class="slide level2">
+<h2>Autocorrelation</h2>
+<p>Below are the autocorrelation plots for each of the four regions in first differences. We observe:</p>
+<ul>
+<li class="fragment"><p>Each region appears strongly correlated with the first lag and the second lag in the Midwest and West.</p></li>
+<li class="fragment"><p>The Northeast and South regions appear to show seasonal correlation.</p></li>
+</ul>
+
+<img data-src="LMU_Time_Series_files/figure-revealjs/acf-plots-1.png" data-fig-pos="C" width="960" class="r-stretch"></section>
+<section id="forecasting-approaches" class="slide level2">
+<h2>Forecasting Approaches</h2>
+<p>Now that we have a few idea of how our data look, let’s try out a few forecasting approaches from both traditional time series methods <code>auto.arima</code> and <code>seasonal</code> and some machine learning approaches using <code>caret</code>:</p>
+<ol type="1">
+<li class="fragment">ARIMA modeling with auto selection.</li>
+<li class="fragment">RegARIMA modeling with X-13ARIMA-SEATS.</li>
+<li class="fragment">Random Forest: a random forest model trained on the first 3 lags.</li>
+<li class="fragment">XGBoost: also trained on the first 3 lags.</li>
+<li class="fragment">Ensemble Forecast: average of the above methods.</li>
+</ol>
+</section>
+<section id="comparing-forecasting-approaches" class="slide level2">
+<h2>Comparing Forecasting Approaches</h2>
+
+<img data-src="LMU_Time_Series_files/figure-revealjs/unnamed-chunk-7-1.png" width="960" class="r-stretch"></section>
+<section id="results" class="slide level2">
+<h2>Results</h2>
+<p>Which forecasts look most reasonable?</p>
+<ul>
+<li class="fragment"><p>Automatic ARIMA selection produced similar results between the other methods.</p>
+<ul>
+<li class="fragment">All models chose to take the first difference to stationarize the series.</li>
+</ul></li>
+<li class="fragment"><p>X-13 appears to capture <em>seasonality</em> best out of the three.</p>
+<ul>
+<li class="fragment">X-13 always chose a log transformation, no residual autocorrelation or seasonality in the residuals.</li>
+</ul></li>
+<li class="fragment"><p>XGBoost and Random Forests appear to capture <em>momentum</em> in each region.</p>
+<ul>
+<li class="fragment">Both methods yielded similar results.</li>
+</ul></li>
+<li class="fragment"><p>The ensemble forecasts temper the <em>volatility</em> between each method.</p>
+<p>Which method appears the best?</p></li>
+</ul>
+</section></section>
+<section>
+<section id="discussion" class="title-slide slide level1 center">
+<h1>Discussion</h1>
+
+</section>
+<section id="discussion-1" class="slide level2">
+<h2>Discussion</h2>
+<p>The topics covered only scratch the surface of time series!</p>
+<ul>
+<li class="fragment">Primarily focused on the basics behind univariate time series models and forecasting, additional math available in the Appendix.</li>
+</ul>
+<!-- -->
+<ul>
+<li class="fragment"><p>Evaluating which model to choose involves both statistical testing, visual inspection, and best judgement.</p>
+<ul>
+<li class="fragment"><p>There is no correct way to approach forecasting, but some are more defensible than others</p></li>
+<li class="fragment"><p>“All models are wrong, but some are useful” - George E.P. Box</p></li>
+</ul></li>
+<li class="fragment"><p>In an applied setting, it’s important to understand the underlying series and its properties.</p></li>
+</ul>
+</section></section>
+<section id="thank-you" class="title-slide slide level1 center">
+<h1>Thank You!</h1>
+
+</section>
+
+<section>
+<section id="appendix" class="title-slide slide level1 center">
+<h1>Appendix</h1>
+
+</section>
+<section id="the-lag-operator" class="slide level2">
+<h2>The Lag Operator</h2>
+<p>The lag operator is a key component of time series analysis and has a few special properties to note. Recall:</p>
+<p><span class="math display">\[
+\begin{align}
+L y_{t}            &amp;\equiv y_{t-1} \\
+\implies L^2 y_{t} &amp;\equiv y_{t-2} \\
+\implies L^k y_{t} &amp;\equiv y_{t-k}.
+\end{align}
+\]</span></p>
+<p>This leads to two nice properties.</p>
+<ol type="1">
+<li class="fragment"><p>The lag operator is commutative with scalar multiplication:</p>
+<p><span class="math display">\[
+c L y_{t} = c y_{t-1},\quad c \in \mathbb{R}.
+\]</span></p></li>
+<li class="fragment"><p>The lag operator is linear and therefore is distributive and associative:</p>
+<p><span class="math display">\[
+L(a y_t + b x_t) = aLy_t + b L x_t, \quad a,b \in \mathbb{R}.
+\]</span></p></li>
+</ol>
+</section>
+<section id="sec-theorem1" class="slide level2">
+<h2>Proof of Theorem 1</h2>
+<p>I start with the AR(1) model</p>
+<p><span class="math display">\[
+y_{t} = \phi_1 y_{t-1} + e_{t}.
+\]</span></p>
+<p>Re-writing with lag operators, we have</p>
+<p><span class="math display">\[
+\begin{align}
+y_{t} &amp;= \phi_1 L y_{t} + e_{t} \\
+\implies y_{t} &amp;= (1-\phi_1 L)^{-1} e_{t}.
+\end{align}
+\]</span></p>
+<p>Letting <span class="math inline">\(z\equiv \phi_1 L\)</span>, we observe for the geometric series</p>
+<p><span class="math display">\[
+(1-z)^{-1} = 1 + z + z^2 + \ldots\quad\text{for}~|z| &lt; 1.
+\]</span></p>
+<p>For <span class="math inline">\(|L \phi_{1}| &lt; 1\)</span> we can therefore re-write</p>
+<p><span class="math display">\[
+y_{t} = (1 + \phi_1 L + \phi_1 L^2 + \phi_1 L^3 + \ldots) e_{t} = \sum_{j=0}^{\infty} \phi_1^j e_{t-j}. \blacksquare
+\]</span></p>
+</section>
+<section id="aside-why-is-called-a-unit-root" class="slide level2">
+<h2>Aside: Why is called a Unit Root?</h2>
+<p>Consider the following stochastic difference equation using the lag operator</p>
+<p><span class="math display">\[
+\begin{align*}
+         &amp;\quad         y_t = y_{t-1} + u_t \\
+\implies &amp;\quad         y_t = L y_t + u_t \\
+\implies &amp;\quad (1 - L) y_t = u_t.
+\end{align*}
+\]</span></p>
+<p>Notice that the equation <span class="math inline">\((1- L) = 0\)</span> has the root <span class="math inline">\(L = 1\)</span>, hence <em>unit root</em>. Notice in the previous proof we assumed <span class="math inline">\(\phi_1\)</span> was in the unit circle, allowing us to invert the AR(1) into an MA(<span class="math inline">\(\infty\)</span>). This highlights the crucial point that not all AR models are invertible.</p>
+</section>
+<section id="impulse-response-functions" class="slide level2">
+<h2>Impulse Response Functions</h2>
+<p>Consider the generic MA(q) process</p>
+<p><span class="math display">\[
+y_t = e_{t} + \theta_1 e_{t-1} + \theta_2 e_{t-2} + \ldots + \theta_q e_{t-q}.
+\]</span></p>
+<p>By differentiating w.r.t previous lags we uncover the <em>impulse response function</em>, which measures the effect of past shocks on <span class="math inline">\(y_t\)</span>, where</p>
+<p><span class="math display">\[
+\frac{d y_{t}}{d e_{t-j}} = \begin{cases} \theta_j,&amp; \quad j = 1, \ldots, q \\
+0,&amp; \quad j = q+1, q+2, \ldots  \end{cases}
+\]</span></p>
+<p>Impulse response functions are useful to test how a shock at time <span class="math inline">\(t\)</span> propagates over time.</p>
+<ul>
+<li class="fragment">Highly useful for macroeconomic policy evaluation, such as how an interest rate shock affects demand and the speed at which the shock dissipates.</li>
+</ul>
+</section></section>
+<section>
+<section id="multivariate-time-series" class="title-slide slide level1 center">
+<h1>Multivariate Time Series</h1>
+
+</section>
+<section id="vector-autoregression-1-of-4" class="slide level2">
+<h2>Vector Autoregression (1 of 4)</h2>
+<h3 id="general-form">General Form</h3>
+<p>Consider two time series <span class="math inline">\(y_{t}\)</span> and <span class="math inline">\(x_{t}\)</span> that may be related to one another. A first order <em>vector autoregression</em> for the system is</p>
+<p><span id="eq-var-1"><span class="math display">\[
+\begin{align}
+y_{t} &amp;= \phi_{11} y_{t-1} + \phi_{12} x_{t-1} + u_{t}  \\
+x_{t} &amp;= \phi_{21} y_{t-1} + \phi_{22} x_{t-1} + v_{t}
+\end{align}
+\qquad(5)\]</span></span></p>
+<p>In words, each variable depends on its lag and the other variable. It is straightforward to represent this <span class="math inline">\(VAR(1)\)</span> system using matrix algrebra as</p>
+<p><span class="math display">\[
+\begin{pmatrix}y_t \\x_t\end{pmatrix} = \begin{pmatrix}\phi_{11} &amp; \phi_{12} \\\phi_{21} &amp; \phi_{22}\end{pmatrix}\begin{pmatrix}y_{t-1} \\x_{t-1}\end{pmatrix}+\begin{pmatrix}u_{t} \\v_{t}\end{pmatrix}.
+\]</span></p>
+<p>Or, in vector form,</p>
+<p><span class="math display">\[
+Z_{t} = \phi Z_{t-1} + w_{t}.
+\]</span></p>
+</section>
+<section id="vector-autoregression-2-of-4" class="slide level2">
+<h2>Vector Autoregression (2 of 4)</h2>
+<h3 id="stationarity-3">Stationarity</h3>
+<p>For the bivariate system above,</p>
+<ol type="1">
+<li class="fragment"><span class="math inline">\(\{y_{t},x_{t}\}\)</span> are both stationary if the eigenvalues of matrix <span class="math inline">\(\phi\)</span> are less than one in absolute value.</li>
+<li class="fragment"><span class="math inline">\(\{y_{t},x_{t}\}\)</span> are integrated of order one and cointegrated if one eigenvalue is one and the other is less than one in absolute value.</li>
+<li class="fragment"><span class="math inline">\(\{y_{t},x_{t}\}\)</span> are both integrated of order two if both eigenvalues of matrix <span class="math inline">\(\phi\)</span> are one.</li>
+</ol>
+</section>
+<section id="vector-autoregression-3-of-4" class="slide level2">
+<h2>Vector Autoregression (3 of 4)</h2>
+<h3 id="optional-showing-stationarity-in-the-var1">(Optional) Showing Stationarity in the VAR(1)</h3>
+<p>Using recursive substitution we can re-write the <span class="math inline">\(VAR(1)\)</span> as</p>
+<p><span class="math display">\[
+Z_t = \phi^t Z_0 + \phi^{t-1} w_1 + \ldots + w_t.
+\]</span></p>
+<p>We know that the series is stationary if the past shocks <span class="math inline">\(w_{t}\)</span> decay over time, or</p>
+<p><span class="math display">\[
+\lim_{t\rightarrow\infty}\phi^t =0 \iff |\lambda_{i}| &lt; 1, i = 1, 2,
+\]</span></p>
+<p>where <span class="math inline">\(\lambda_{i}\)</span> are the eigenvalues of <span class="math inline">\(\phi\)</span>.</p>
+</section>
+<section id="vector-autoregression-4-of-4" class="slide level2">
+<h2>Vector Autoregression (4 of 4)</h2>
+<p>An eigenvalue <span class="math inline">\(\lambda\)</span> satisfies the following</p>
+<p><span id="eq-characteristic"><span class="math display">\[
+\begin{align}
+A v &amp;= \lambda v \\
+    \implies (A - \lambda I)v &amp;= 0,
+\end{align}
+\qquad(6)\]</span></span></p>
+<p>where <span class="math inline">\(I\)</span> is the identity matrix. The eigenvalues <span class="math inline">\(\lambda\)</span> can be found by solving</p>
+<p><span class="math display">\[
+\det(A - \lambda I) = 0.
+\]</span></p>
+<p>For a <span class="math inline">\(2\times2\)</span> matrix <span class="math inline">\(A_{2\times2}\)</span>, we find eigenvalues <span class="math inline">\(\lambda\)</span> by solving</p>
+<p><span class="math display">\[
+\begin{vmatrix}a_{11} - \lambda &amp; a_{12} \\a_{21} &amp; a_{22} - \lambda\end{vmatrix} = (a_{11} - \lambda)(a_{22} - \lambda) - a_{12} a_{21} = 0
+\]</span></p>
+<p>which simplifies to the polynomial</p>
+<p><span class="math display">\[
+\lambda^2 - (a_{11} + a_{22})\lambda + (a_{11}a_{22} - a_{12}a_{21}) = 0.
+\]</span></p>
+<p>We can then obtain the values for <span class="math inline">\(\lambda_1\)</span>, <span class="math inline">\(\lambda_2\)</span> using the quadratic formula.</p>
+<!-- ## Cointegration (1 of) -->
+<!-- ### Spurious Regression -->
+<!-- Consider the regression of $y_{t}$ on ${x_t}$ -->
+<!-- $$ -->
+<!-- y_{t} = \beta x_{t} + u_{t}, -->
+<!-- $$ -->
+<!-- where both $y_{t}$ and ${x_t}$ are non-stationary. If there is no $\beta$ such that the residual $u_{t} = y_{t} - \beta x_{t}$ is stationary, OLS will provide a spurious result. -->
+<!-- -   Why? If both series are non-stationary, each series may contain unrelated trends that appear related. -->
+<!-- -   For example, consider employment and vehicle miles driven per capita, both of which trend upward. Applying PLS would show a positive $\beta$ despite a non-causal relationship between the two series. -->
+<!-- ## Cointegration -->
+<!-- ### (Optional) Example -->
+<!-- Suppose $y_{t}$ and $x_{t}$ follow a *random walk,* -->
+<!-- $$ -->
+<!-- \begin{align} -->
+<!-- y_{t} &= y_{t-1} + u_{t} \\ -->
+<!-- x_{t} &= x_{t-1} + v_{t}. -->
+<!-- \end{align} -->
+<!-- $$ -->
+<!-- These two processes are non-stationary and independent. A regression of $y_{t}$ on $x_{t}$ would compute $\beta$ as -->
+<!-- $$ -->
+<!-- \hat{\beta}=\frac{\sum_{t=1}^{T}y_{t} x_{t}} {\sum_{t=1}^{T} x^{2}_{t}} \implies \frac{\int W_y(t)W_x(t)}{\int W_x(t)^2}\equiv B, -->
+<!-- $$ -->
+<!-- where $W_y(t)$ and $W_x(t)$ are independent Brownian motions, the continuous time analog to the random walk. If $y_t$ and $x_t$ are independent stationary series, $\hat{\beta}$ will converge to zero. If the two series are independent, as $T$ grows large the numerator will converge in distribution to -->
+<!-- $$ -->
+<!-- \frac{1}{\sqrt{T}} \sum_{t=1}^T x_t y_t \overset{d}{\longrightarrow} \mathcal{N}(0, \sigma^2) -->
+<!-- $$ -->
+</section>
+<section id="cointegration" class="slide level2">
+<h2>Cointegration</h2>
+<h3 id="definition">Definition</h3>
+<p><em>Cointegration</em> is when two or more non-stationary time series are related such that a linear combination of each is jointly stationary. Consider the two non-stationary processes <span class="math inline">\(y_{t}\)</span> and <span class="math inline">\(x_{t}\)</span>. If the residual</p>
+<p><span class="math display">\[
+z_{t} = y_{t} - \beta x_{t}
+\]</span></p>
+<p>is stationary, then we say that the two series are <em>cointegrated</em>. In words, this means we can find some <span class="math inline">\(\beta\)</span> such that there exists some linear combination of the two series that is stationary.</p>
+<ul>
+<li class="fragment"><p>While both <span class="math inline">\(y_{t}\)</span> and <span class="math inline">\(x_{t}\)</span> may be non-stationary, for example, both may be trending in similar directions or show similar patterns, cointegration suggests that both series move together in the long-run.</p></li>
+<li class="fragment"><p>This means we can model both short- and long-term dynamics between each series.</p></li>
+</ul>
+</section>
+<section id="error-correction-models" class="slide level2">
+<h2>Error Correction Models</h2>
+<p><em>Error correction models</em> (ECMs) provide a means to model non-stationary series that share a joint long-term equilibrium. The basic ECM follows</p>
+<p><span class="math display">\[
+\begin{align}
+\Delta y_{t} &amp;= \alpha z_{t-1} + \gamma_1 \Delta y_{t-1} + \ldots + \gamma_{p-1} \Delta y_{t - p + 1} + e_{t} \\
+z_{t-1} &amp;= \beta y_{t-1}.
+\end{align}
+\]</span></p>
+<p>The term <span class="math inline">\(z_{t-1}\)</span> measures the disequilibrium between the two series and <span class="math inline">\(\beta\)</span> is the cointegrating vector. When do we choose to run an ECM over a VAR?</p>
+<ul>
+<li class="fragment"><p>First, test all of the series for stationarity. If all are stationary, run a <span class="math inline">\(VAR(p)\)</span> in either levels or differences.</p></li>
+<li class="fragment"><p>If there is non-stationarity, apply a cointegration (Johansen test) test to the data. If the series are not cointegrated, run a <span class="math inline">\(VAR(p)\)</span> in differences. Otherwise, run an ECM.</p></li>
+</ul>
+<div class="quarto-auto-generated-content">
+<div class="footer footer-default">
+
+</div>
+</div>
+</section></section>
+    </div>
+  </div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="LMU_Time_Series_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="LMU_Time_Series_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': true,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: false,
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
+    <script id="quarto-html-after-body" type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      }
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      }
+      toggleBodyColorPrimary();  
+      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+      tabsets.forEach(function(tabset) {
+        const tabby = new Tabby('#' + tabset.id);
+      });
+      const isCodeAnnotation = (el) => {
+        for (const clz of el.classList) {
+          if (clz.startsWith('code-annotation-')) {                     
+            return true;
+          }
+        }
+        return false;
+      }
+      const clipboard = new window.ClipboardJS('.code-copy-button', {
+        text: function(trigger) {
+          const codeEl = trigger.previousElementSibling.cloneNode(true);
+          for (const childEl of codeEl.children) {
+            if (isCodeAnnotation(childEl)) {
+              childEl.remove();
+            }
+          }
+          return codeEl.innerText;
+        }
+      });
+      clipboard.on('success', function(e) {
+        // button target
+        const button = e.trigger;
+        // don't keep focus
+        button.blur();
+        // flash "checked"
+        button.classList.add('code-copy-button-checked');
+        var currentTitle = button.getAttribute("title");
+        button.setAttribute("title", "Copied!");
+        let tooltip;
+        if (window.bootstrap) {
+          button.setAttribute("data-bs-toggle", "tooltip");
+          button.setAttribute("data-bs-placement", "left");
+          button.setAttribute("data-bs-title", "Copied!");
+          tooltip = new bootstrap.Tooltip(button, 
+            { trigger: "manual", 
+              customClass: "code-copy-button-tooltip",
+              offset: [0, -8]});
+          tooltip.show();    
+        }
+        setTimeout(function() {
+          if (tooltip) {
+            tooltip.hide();
+            button.removeAttribute("data-bs-title");
+            button.removeAttribute("data-bs-toggle");
+            button.removeAttribute("data-bs-placement");
+          }
+          button.setAttribute("title", currentTitle);
+          button.classList.remove('code-copy-button-checked');
+        }, 1000);
+        // clear code selection
+        e.clearSelection();
+      });
+        var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+        var mailtoRegex = new RegExp(/^mailto:/);
+          var filterRegex = new RegExp('/' + window.location.host + '/');
+        var isInternal = (href) => {
+            return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+        }
+        // Inspect non-navigation links and adorn them if external
+     	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+        for (var i=0; i<links.length; i++) {
+          const link = links[i];
+          if (!isInternal(link.href)) {
+            // undo the damage that might have been done by quarto-nav.js in the case of
+            // links that we want to consider external
+            if (link.dataset.originalHref !== undefined) {
+              link.href = link.dataset.originalHref;
+            }
+          }
+        }
+      function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+        const config = {
+          allowHTML: true,
+          maxWidth: 500,
+          delay: 100,
+          arrow: false,
+          appendTo: function(el) {
+              return el.closest('section.slide') || el.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'light-border',
+          placement: 'bottom-start',
+        };
+        if (contentFn) {
+          config.content = contentFn;
+        }
+        if (onTriggerFn) {
+          config.onTrigger = onTriggerFn;
+        }
+        if (onUntriggerFn) {
+          config.onUntrigger = onUntriggerFn;
+        }
+          config['offset'] = [0,0];
+          config['maxWidth'] = 700;
+        window.tippy(el, config); 
+      }
+      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+      for (var i=0; i<noterefs.length; i++) {
+        const ref = noterefs[i];
+        tippyHover(ref, function() {
+          // use id or data attribute instead here
+          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+          try { href = new URL(href).hash; } catch {}
+          const id = href.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note) {
+            return note.innerHTML;
+          } else {
+            return "";
+          }
+        });
+      }
+      const findCites = (el) => {
+        const parentEl = el.parentElement;
+        if (parentEl) {
+          const cites = parentEl.dataset.cites;
+          if (cites) {
+            return {
+              el,
+              cites: cites.split(' ')
+            };
+          } else {
+            return findCites(el.parentElement)
+          }
+        } else {
+          return undefined;
+        }
+      };
+      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+      for (var i=0; i<bibliorefs.length; i++) {
+        const ref = bibliorefs[i];
+        const citeInfo = findCites(ref);
+        if (citeInfo) {
+          tippyHover(citeInfo.el, function() {
+            var popup = window.document.createElement('div');
+            citeInfo.cites.forEach(function(cite) {
+              var citeDiv = window.document.createElement('div');
+              citeDiv.classList.add('hanging-indent');
+              citeDiv.classList.add('csl-entry');
+              var biblioDiv = window.document.getElementById('ref-' + cite);
+              if (biblioDiv) {
+                citeDiv.innerHTML = biblioDiv.innerHTML;
+              }
+              popup.appendChild(citeDiv);
+            });
+            return popup.innerHTML;
+          });
+        }
+      }
+    });
+    </script>
+    
+
+</body></html>

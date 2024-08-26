@@ -1,0 +1,17 @@
+$regression:
+$regression$estimates:
+group	variable	estimate	standard error	fixed
+-----	--------	-----------	--------------	-----
+Automatically Identified Outliers	LS2007.Oct	-0.803069964772074E+00	+0.123427278493633E+00	       
+Automatically Identified Outliers	AO2014.Feb	-0.885401444685251E+00	+0.206838043827831E+00	       
+Automatically Identified Outliers	AO2019.Apr	-0.854337592490570E+00	+0.207947732356674E+00	       
+$arima:
+$arima$estimates:
+operator	factor	period	lag	estimate	standard error	fixed
+--------	------	------	---	--------	--------------	-----
+MA	Nonseasonal	01	01	+0.82672944010738E+00	+0.32934772293173E-01	       
+MA	Seasonal	12	12	+0.83082232923252E+00	+0.39830612811849E-01	       
+$variance:
+
+mle	+0.51138538764729E-01
+se	+0.43066418661251E-02
